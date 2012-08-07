@@ -1,3 +1,12 @@
+; penultimate
+
+(defn penultimate2 "P02" [l]
+(if (empty? (rest (rest l)))
+(first l)
+(penultimate2 (rest l))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; 21: Write a function which returns the Nth element from a sequence.
 ; (= (__ '(4 5 6 7) 2) 6)
 ; forbidden: nth
@@ -12,12 +21,26 @@
 ; or:
 (fn [coll n] (first (drop n coll)))
 
+#(loop [items %1 n %2]
+    (if (= n 0) 
+       (first items)
+       (recur (rest items) (dec n))))
+
+#(first (drop %2 %1))
+
 ; 22: Write a function which returns the total number of elements in a sequence.
 ; (= (__ '(1 2 3 3 1)) 5)
 ; forbidden: count
 #(reduce + (map (fn [x] 1) %))
 ; We just turn each element into 1 and then add them up
 ; Note that (fn [x] 1) can be replaced by (constantly 1)
+
+#(loop [items %1 n 0]  
+  (if (empty? items) 
+     n
+     (recur (rest items) (inc n))))
+
+#(apply + (map (fn [_] 1) %))
 
 ; 23: Write a function which reverses a sequence.
 ; (= (__ [1 2 3 4 5]) [5 4 3 2 1])
@@ -26,6 +49,48 @@
 ; We exploit the property of the list, which alway add new element
 ; in front of the head. Also that the clojure sequences' equality
 ; evaluation is element based, so [1 2 3] equals to '(1 2 3)
+
+(fn [s]
+  (loop [s s
+         res []]
+           (if (empty? s)
+              res
+              (recur (rest s) (cons (first s) res)))))
+
+
+#_(loop
+clojure.core
+
+    (loop bindings & body)
+
+Evaluates the exprs in a lexical context in which the symbols in
+the binding-forms are bound to their respective init-exprs or parts
+therein. Acts as a recur target.)
+
+;looping is recursive in Clojure, the loop construct is a hack so that something like tail-recursive-optimization works in clojure.
+user=> (defn my-re-seq [re string]
+         "Something like re-seq"
+         (let [matcher (re-matcher re string)]
+
+           (loop [match (re-find matcher) ;loop starts with 2 set arguments
+                  result []]
+             (if-not match
+               result
+               (recur (re-find matcher)    ;loop with 2 new arguments
+                      (conj result match))))))
+
+#'user/my-re-seq
+
+user=> (my-re-seq #"\d" "0123456789")
+["0" "1" "2" "3" "4" "5" "6" "7" "8" "9"]
+
+;tail position: http://stackoverflow.com/questions/7813497/clojure-what-exactly-is-tail-position-for-recur
+; http://stackoverflow.com/questions/7052203/how-can-i-call-recur-in-an-if-conditional-in-clojure
+(fn t [x] (loop [c 0 x x] (when (< c x) (println "run") (recur (+ 1 c) x)))))
+
+(loop [i 0] (if (< i 10) (recur tail (+ 1 i)) (print "end")))
+(loop [i 0] (when (< i 10) (print i) (recur (+ 1 i)) ))
+(loop [x 10] (when (> x 1) (println x) (recur (- x 2)))) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
