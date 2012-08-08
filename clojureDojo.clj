@@ -391,6 +391,25 @@ user=> (binding [x 2 y 3]
 
 ;;;;;;;
 
+(fn f [[h & t]] 
+  (if h
+    (if (coll? h)
+      (concat (f h) (f t))
+      (cons h (f t)))))
+
+(fn [ss]
+  (letfn [(flt [s]
+              (if (coll? s)
+                (apply concat (map flt s))
+                [s]))]
+   (flt ss)))
+
+(fn [s]
+  (filter (complement sequential?)
+    (tree-seq sequential? seq s)))
+
+;;;;;;;
+
 #_(
 
 apply
@@ -407,7 +426,7 @@ Applies fn f to the argument list formed by prepending intervening arguments to 
 
 (fn takeCapitals [s] 
   (apply str
-    (filter #(Character/isUpperCase %) (seq s))
+    (filter #(Character/isUpperCase %) (seq s)
     )
   )
 )
@@ -418,6 +437,8 @@ Applies fn f to the argument list formed by prepending intervening arguments to 
     apply str (seq (clojure.string/split s #"[a-z , ! $ # & * ( 0-9]"))
   )
 )
+
+#(apply str (re-seq #"[A-Z]" %))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -483,3 +504,18 @@ Applies fn f to the argument list formed by prepending intervening arguments to 
 ((fn [n] (take n (map first (iterate (fn [[a b]] [b (+ a b)]) [1 1])))) 5)
 
 ;;;;;;;;;;;;;;;;;;
+
+; 30: Write a function which removes consecutive duplicates from a sequence.
+;  (= (apply str (__ "Leeeeeerrroyyy")) "Leroy")
+(fn cmprs [coll]
+  (when-let [[f & r] (seq coll)] 
+    (if (= f (first r)) 
+      (cmprs r) 
+      (cons f (cmprs r)))))  
+; Basically a variant of the filter function. Note the sequence is destructed
+; into first element f and the rest r. 
+
+(fn [a]
+  (map first (partition-by identity a)))
+
+;;;;;;;;;;;;;;;;
