@@ -445,4 +445,41 @@ Applies fn f to the argument list formed by prepending intervening arguments to 
 
 ;;;;;;;;;;;;;;;;;;;;;
 
+((fn foo [x]
+   (loop [i 0]
+     (println (str "running... " i))
+         (if (= i x)
+       (println (str i ":" x " end"))
+       (recur (inc i))
+  )
+)
+  ) 5)
 
+;;;;;;;;;
+
+  (defn multiple? [n div]
+    (= 0 (mod n div)))
+
+;;;;;;;;;;;;;
+
+  (defn factorial-1 [number]
+  "computes the factorial of a positive integer
+   in a way that doesn't consume stack space"
+  (loop [n number factorial 1]
+    (if (zero? n)
+      factorial
+      (recur (dec n) (* factorial n)))))
+
+;;;;;;;;;;;
+
+;; another fib
+
+(fn [n]
+  (take n
+        (map first
+             (iterate (fn [[f s]] [s (+ f s)])
+                      [1 1]))))
+
+((fn [n] (take n (map first (iterate (fn [[a b]] [b (+ a b)]) [1 1])))) 5)
+
+;;;;;;;;;;;;;;;;;;
