@@ -519,3 +519,60 @@ Applies fn f to the argument list formed by prepending intervening arguments to 
   (map first (partition-by identity a)))
 
 ;;;;;;;;;;;;;;;;
+
+;;;;
+
+(defn make-point [x y]
+  (fn [member]
+    (cond
+          (= member :x) x
+          (= member :y) y)))
+
+;;;;
+
+(defn make-point [x y]
+  (fn [f]
+    (f x y)))
+
+(defn point-x [pt]
+  (pt (fn [x y] x)))
+(defn point-y [pt]
+  (pt (fn [x y] y)))
+(def pt (make-point 1 2))
+(println [(point-x pt) (point-y pt)])
+
+;;;;;;;;;;
+
+user=> (for [x [0 1 2 3 4 5]
+             :let [y (* x 3)]
+             :when (even? y)]
+         y)
+;=> (0 6 12)
+
+user=> (for [x (range 1 6)
+             :let [y (* x x)
+                   z (* x x x)]]
+         [x y z])
+
+;=> ([1 1 1] [2 4 8] [3 9 27] [4 16 64] [5 25 125])
+
+; Demonstrating difference between :when and :while
+
+user=> (time (dorun (for [x (range 1000) y (range 10000) :when (> x y)] [x y])))
+;=> "Elapsed time: 2898.908 msecs"
+;=> nil
+
+user=> (time (dorun (for [x (range 1000) y (range 10000) :while (> x
+y)] [x y])))
+;=> "Elapsed time: 293.677 msecs"
+;=> nil
+
+
+(defn print-seq [s]
+  (when (seq s)
+    (prn (first s))
+    (recur (rest s))))
+
+(defn print-seq [s]
+  (doseq [s(seq s)]
+    prn (first s)))  ;;??????????????
