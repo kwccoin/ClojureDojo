@@ -655,10 +655,26 @@ a new value. Returns a lazy seq of partitions.
   ; pack takes 3 arguments: res, prev, coll
   ((fn pack [res prev coll]
     ; (if-let bindings then)
-    ;  
+    ; if there is something to put in f, and eventually
+    ; in r, then the body is evaluated 
     (if-let [[f & r] (seq coll)] 
-      (if (= f (first prev)) 
+      ; there is something in f...
+      (if (= f (first prev))
+         ; 'then' clause
+         ; if the first element of coll is
+         ; equals the first of prev
+         ; then call pack with the same res
+         ; but adding f in prev and evaluating the
+         ; the rest of the coll.
+         ; i.e. adding an element in an existing set.
          (pack res (conj prev f) r) 
+         ; 'else' clause:
+         ; else create a new set, calling pack
+         ; cojuncting the last prev in res, 
+         ; i.e. "closing" a set and the
+         ; starting a new prev with f and continuing the
+         ; evaluation of the coll taking the rest, 
+         ; just as the 'then' clause.
          (pack (conj res prev) [f] r))) 
     (conj res prev))
     ; first argument for pack 
