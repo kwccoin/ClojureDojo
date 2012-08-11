@@ -508,12 +508,19 @@ Applies fn f to the argument list formed by prepending intervening arguments to 
 ; 30: Write a function which removes consecutive duplicates from a sequence.
 ;  (= (apply str (__ "Leeeeeerrroyyy")) "Leroy")
 (fn cmprs [coll]
-  (when-let [[f & r] (seq coll)] 
+  (when-let [[f & r] (seq coll)] ;run while (seq coll) != nil
     (if (= f (first r)) 
       (cmprs r) 
       (cons f (cmprs r)))))  
 ; Basically a variant of the filter function. Note the sequence is destructed
 ; into first element f and the rest r. 
+
+;Why we need of (seq coll)?
+;coll? returns true if x implements IPersistentCollection
+;and coll? "foo" is false but coll? (seq "foo") is true.
+
+; because (seq nil) returns nil, the binding-form test [f (seq coll)] is a good boolean test for the when-let form.
+
 
 (fn [a]
   (map first (partition-by identity a)))
@@ -573,6 +580,92 @@ y)] [x y])))
     (prn (first s))
     (recur (rest s))))
 
-(defn print-seq [s]
-  (doseq [s(seq s)]
-    prn (first s)))  ;;??????????????
+((defn print-seq [s]
+  (if (sequential? s)
+        (doseq [z (map inc s)]
+      (prn z)))
+        (str "started from: " s)
+   ) '( 1 2 3 ))
+
+(doseq [x [1 2 3]
+        y [1 2 3]]
+         (prn (* x y)))
+
+(doseq [x '(1 2 3)]
+  (prn x))
+
+  (#( = (first %) (first (next (seq %))))"fooof")
+
+(if ( true) (pr "yes")(prn "no"))
+
+user=> (assoc {} :key1 "value" :key2 "another value")
+{:key2 "another value", :key1 "value"}
+
+user=> (assoc {:key1 "old value1" :key2 "value2"} :key1 "value1" :key3 "value3")
+{:key3 "value3", :key2 "value2", :key1 "value1"}
+
+user=> (assoc [1 2 3] 0 10)
+[10 2 3]
+
+user=> (assoc [1 2 3] 3 10)
+[1 2 3 10]
+
+(#( = (first %) (first (next (seq %)))) "fooof")
+
+;;;;;;;;;;;;;;;;;;;;;;;
+
+((fn fs [x]
+  (if
+    (#( = (first %) (first (next (seq %)))) x)
+    (pr "yes")
+    (pr "no")
+        ;(str (first x) ":" (fs (rest x)))
+        ))
+"foof")
+
+;;;
+
+; 30. compress a sequence
+(fn rd [c] 
+  (when-let [s (seq c)]
+    (if (= (first s) (first (rest s)))
+    (rd (rest s))
+    (cons (first s) (rd (rest s))))))
+
+; using partition
+#_(
+partition-by
+clojure.core
+    (partition-by f coll)
+Applies f to each value in coll, splitting it each time f returns
+a new value. Returns a lazy seq of partitions.
+)
+
+(fn rd [c] (map distinct (partition-by (fn [x] x) (seq c))))
+((fn rd [c] (flatten (map distinct (partition-by (fn [x] x) (seq c))))) [1 1 2 3 4 4 4 ])
+((fn rd [c] (apply str (flatten (map distinct (partition-by (fn [x] x) (seq c)))))) "fooooobas")
+
+;;;;;;;;;;;;;;
+
+; 31. pack a sequence
+
+; the main function
+(fn [coll] 
+  ; the inner function pack for the recursion
+  ; pack takes 3 arguments: res, prev, coll
+  ((fn pack [res prev coll]
+    ; (if-let bindings then)
+    ;  
+    (if-let [[f & r] (seq coll)] 
+      (if (= f (first prev)) 
+         (pack res (conj prev f) r) 
+         (pack (conj res prev) [f] r))) 
+    (conj res prev))
+    ; first argument for pack 
+    [] ; res
+    ; second argument for pack
+    [(first coll)] ; prev
+    ; third argument for pack
+    (rest coll)) ; coll
+) 
+
