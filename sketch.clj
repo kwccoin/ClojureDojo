@@ -80,3 +80,10 @@ user=> (let [m {}] (doseq [[x y] (map list (kys) (range 0 10)), m (assoc m x y)]
 [@7 7]
 [@8 8]
 [@9 9]
+
+
+(defn makekeymap [m] 
+  (for [[x y] (map list (kys) (range 0 10))] 
+    [assoc m x y]))
+
+(assoc {} (first (flatten (map list (kys) (range 0 10)))) (second (flatten (map list (kys) (range 0 10)))))
