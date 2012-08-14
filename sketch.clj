@@ -87,3 +87,93 @@ user=> (let [m {}] (doseq [[x y] (map list (kys) (range 0 10)), m (assoc m x y)]
     [assoc m x y]))
 
 (assoc {} (first (flatten (map list (kys) (range 0 10)))) (second (flatten (map list (kys) (range 0 10)))))
+
+;;;
+
+(defn kys [] (let [r (range 0 10)] (map #(str "@" %) r)))
+
+(let [m {}] (doseq [[x y] (map list (kys) (range 0 10))] (when [m]
+(println (str x ":" y " in " m)))))
+
+(assoc {} (first (flatten (map list (kys) (range 0 10)))) (second
+(flatten (map list (kys) (range 0 10)))))
+
+(zipmap (range 1 5) (range 11 16))
+
+(defn zipmap
+  "Returns a map with the keys mapped to the corresponding vals."
+  {:added "1.0"
+   :static true}
+  [keys vals]
+    (loop [map {}
+           ks (seq keys)
+           vs (seq vals)]
+      (if (and ks vs)
+        (recur (assoc map (first ks) (first vs))
+               (next ks)
+               (next vs))
+        map)))
+
+-------------------------
+clojure.core/seq
+([coll])
+Returns a seq on the collection. If the collection is
+empty, returns nil. (seq nil) returns nil. seq also works on
+Strings, native Java arrays (of reference types) and any objects
+that implement Iterable.
+nil
+
+-------------------------
+clojure.core/loop
+(loop [bindings*] exprs*)
+Special Form
+Evaluates the exprs in a lexical context in which the symbols in
+the binding-forms are bound to their respective init-exprs or parts
+therein. Acts as a recur target.
+
+Please see http://clojure.org/special_forms#loop
+nil
+
+-------------------------
+recur
+(recur exprs*)
+Special Form
+Evaluates the exprs in order, then, in parallel, rebinds
+the bindings of the recursion point to the values of the exprs.
+Execution then jumps back to the recursion point, a loop or fn method.
+
+Please see http://clojure.org/special_forms#recur
+nil
+
+-------------------------
+clojure.core/zipmap
+([keys vals])
+Returns a map with the keys mapped to the corresponding vals.
+nil
+
+-------------------------
+clojure.core/next
+([coll])
+Returns a seq of the items after the first. Calls seq on its
+argument. If there are no more items, returns nil.
+nil
+
+-------------------------
+clojure.core/rest
+([coll])
+Returns a possibly empty seq of the items after the first. Calls seq on its
+argument.
+nil
+
+;;;;;;;
+
+(defn zipInMap [keys vals]
+  (loop [map {}
+        keys (seq keys)
+        vals (seq vals)]
+        (if (and keys vals)
+        (recur (assoc m (first keys) (first vals))
+               (next keys)
+               (next vals))
+        map)))
+;;;;
