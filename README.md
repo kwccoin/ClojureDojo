@@ -63,7 +63,7 @@ http://fogus.me/fun/marginalia/
 http://dev.clojure.org/display/doc/Getting+Started
 
 - The Joy of Clojure | Thinking the Clojure Way
-joyofclojure.com/
+http://joyofclojure.com/
 https://github.com/joyofclojure/
 https://github.com/fogus/
 
