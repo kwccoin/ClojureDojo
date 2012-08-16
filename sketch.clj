@@ -177,3 +177,17 @@ nil
                (next vals))
         map)))
 ;;;;
+
+user=> (defn keyz "create the keys" [] (map str (map char (range 65 91))))
+#'user/keyz
+(defn zipInMap [k v] 
+  (loop [m {} 
+         kk k 
+         vv v] 
+         (if (and kk vv) 
+         (recur (m (assoc m (first kk) (first vv)) 
+           (next k) 
+           (next v)) 
+         m)))
+#'user/zipInMap
+
