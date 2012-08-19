@@ -178,16 +178,78 @@ nil
         map)))
 ;;;;
 
-user=> (defn keyz "create the keys" [] (map str (map char (range 65 91))))
-#'user/keyz
+(defn keyz "create the keys" [] (map str (map char (range 65 91))))
 (defn zipInMap [k v] 
   (loop [m {} 
          kk k 
          vv v] 
          (if (and kk vv) 
-         (recur (m (assoc m (first kk) (first vv)) 
-           (next k) 
-           (next v)) 
+         (recur (assoc m (first kk) (first vv)) 
+           (next kk) 
+           (next vv)) 
          m)))
-#'user/zipInMap
+(zipInMap ["a" "b"] [1 2])
+
+;;;;;;;;;;;;;;;;;;;;
+
+-------------------------
+clojure.core/<
+([x] [x y] [x y & more])
+  Returns non-nil if nums are in monotonically increasing order,
+  otherwise false.
+
+;given a point 'xy' and a 'size'
+;neighbours return the vector of the
+;cross coordinates surround the point
+;and filtered by the existence.
+
+(defn neighbours 
+  ; deltas are the 'cross' coordinates to check
+  ; xy are the coordinates of a point
+  ; size, the distance to check
+  ([size xy] (let [deltas [[-1 0][1 0][0 -1][0 1]]] (neighbours deltas size xy)))
+  ([deltas size xy]
+    (filter 
+    ;filter needs a predicate, so I define one here:
+      (fn [xys-to-check] (every? #(< -1 % size) xys-to-check)) 
+      ;this predicate just check that every point in xys-to-check, that must be a collection, is inside the 1st quadrant. A predicate must return a Boolean value. It use the '<' function with the 3rd parameter that means the size of the quadrant
+      (map #(map + % xy) deltas) 
+      ;this map find the vector of cross coordinates and is checked by the predicate i.e. filtered.
+)))
+
+;;;;;;;;;;;;;
+
+;;lol try: (filter #(re-find #"Case" %) (map #(.getName %) (seq (.getMethods String))))
+
+(defn keyz "create the keyz" [] (map str (map char (range 65 91))))
+(map #(.toLowerCase %) (keyz))
+(defn how-many [n] (take n (repeatedly rand)))
+(use '[clojure.contrib.math :only (round)])
+
+(let [h 10 
+      l (inc (round (/ h 26)))
+      v (take h (repeatedly rand))
+      k (take h (keyz))] 
+      (zipmap k v)
+)
+
+(fn [x] 
+  (loop [times x
+         k (keyz) ]
+    ( if (zero? times)
+      k
+      (recur (dec times) ())
+      
+)))
+
+;every 2-combination of letters
+(for [x (keyz) y (keyz)] (map str x y))
+;apply a prefix
+(doseq [x ":" y (keyz)] (println (str x y)))
+(defn extend-keys [list] (doseq [x (keyz) y list] (str x y)))
+
+;;yum!
+(defn asd [list] (for [x list y (keyz)] (map str x y)))
+(asd (asd (keyz)))
+
 
