@@ -233,13 +233,13 @@ clojure.core/<
       (zipmap k v)
 )
 
-(fn [x] 
+(defn foo [x] 
   (loop [times x
-         k (keyz) ]
+         k (keyz)
+         s ""]
     ( if (zero? times)
-      k
-      (recur (dec times) ())
-      
+      s
+      (recur (dec times) k (map str k k))
 )))
 
 ;every 2-combination of letters
