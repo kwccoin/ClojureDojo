@@ -236,10 +236,10 @@ clojure.core/<
 (defn foo [x] 
   (loop [times x
          k (keyz)
-         s ""]
-    ( if (zero? times)
+         s '()]
+    (if (zero? times)
       s
-      (recur (dec times) k (map str k k))
+      (recur (dec times) k (map str (seq k) (seq k)))
 )))
 
 ;every 2-combination of letters
