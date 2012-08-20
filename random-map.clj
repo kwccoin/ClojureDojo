@@ -22,7 +22,7 @@
          s (keyz)]
     (if (zero? times)
       s
-      (recur (dec times) k (for [x (keyz) y s] (map str x y)))
+      (recur (dec times) k (for [x (keyz) y s] (map str (str x) y)))
 )))
 (defn rand-map
     ([] (rand-map 10)) 
