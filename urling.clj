@@ -61,6 +61,23 @@
 (use 'pl.danieljanus.tagsoup)
 (parse "http://example.com")
 
+;tag
+;attributes
+;children
+
+(get (get (get (parse "http://www.example.com") 2) 2) 2)
+
+(while (children (parsed))
+  (deep parsed))
+
+(defn deep [parsed] 
+  (if (string? parsed)
+  ;(if (= :a (tag parsed))
+    parsed
+    (let [v parsed] 
+      (deep (get v 2)))
+))
+
 ;;;;;;;;;;;
 
 (ns in.grok.history.html-parser
