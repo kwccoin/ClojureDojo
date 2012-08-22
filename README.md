@@ -122,6 +122,24 @@ http://blog.japila.pl/2012/08/a-sample-of-clojure-destructuring-from-a-blog-post
     reddit: the front page of the internet 
 http://www.reddit.com/r/clojure
 
+- London Clojurians
+http://londonclojurians.org/
+
+- The Clojure Toolbox
+http://www.clojure-toolbox.com/
+
+- Clojars
+https://clojars.org/
+
+- Common programming mistakes for Clojure developers to avoid - Stack Overflow
+http://stackoverflow.com/questions/2020570/common-programming-mistakes-for-clojure-developers-to-avoid
+
+- An explorer's log
+http://nakkaya.com/
+
+- Fractals in Clojure - Fractal Fern
+http://nakkaya.com/2009/09/28/fractals-in-clojure-fractal-fern/
+
 ---
 
 - Clojars - jar repository

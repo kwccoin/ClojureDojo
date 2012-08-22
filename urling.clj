@@ -67,8 +67,9 @@
 
 (get (get (get (parse "http://www.example.com") 2) 2) 2)
 
-(while (children (parsed))
-  (deep parsed))
+(def tst [:a 0 
+            [:b 1 
+              [:c 2 "end"]]])
 
 (defn deep [parsed] 
   (if (string? parsed)
@@ -77,6 +78,10 @@
     (let [v parsed] 
       (deep (get v 2)))
 ))
+
+(doseq [[t a c] parsed] 
+  (if (and t a c)
+  (println "tag: " t " attr: " a " childs: " c)))
 
 ;;;;;;;;;;;
 
