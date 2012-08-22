@@ -69,7 +69,9 @@
 
 (def tst [:a 0 
             [:b 1 
-              [:c 2 "end"]]])
+              [:c 2 "c end"]
+              [:d 2 "d end"]
+              [:e 2 "e end"]]])
 
 (defn deep [parsed] 
   (if (string? parsed)
@@ -82,6 +84,27 @@
 (doseq [[t a c] parsed] 
   (if (and t a c)
   (println "tag: " t " attr: " a " childs: " c)))
+
+;NOPE
+(defn clea [tst] 
+  (loop [[f s t & o] tst,
+         ] 
+    (println " ---> f:" f "| s:" s "| t:" t )
+    (if o 
+       (println "  ---> o:" o))
+    ;(if (vector? t) 
+    (if (vector? t) 
+      (recur t)
+      ;(recur o)))) 
+    ;(if o 
+    ;  (recur o)))) 
+;NOPE
+(defn clea [tri]
+  (loop [[t r i] tri]
+    (println " ---> t:" t "| r:" r "| i:" i )
+    (for [el i] (println "  --> el: " el))
+    (recur i)
+    ))
 
 ;;;;;;;;;;;
 
