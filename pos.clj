@@ -42,3 +42,5 @@ user=> (def fib (map first (iterate (fn [[a b]] [b (+ a b)]) [1 1])))
 
 user=> (take 10 fib)
 (1 1 2 3 5 8 13 21 34 55)
+
+; back to studying!
