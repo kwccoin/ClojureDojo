@@ -51,3 +51,50 @@
 [7 0] [7 1] [7 2] [7 3] [7 4] [7 5] [7 6] [7 7]
 [8 0] [8 1] [8 2] [8 3] [8 4] [8 5] [8 6] [8 7] [8 8]
 [9 0] [9 1] [9 2] [9 3] [9 4] [9 5] [9 6] [9 7] [9 8] [9 9])
+
+; compose and create a function, based on its arguments
+(defn fnth [n]
+  (apply comp
+    (cons first
+      (take (dec n) (repeat rest)))))
+
+; create some keywords...
+(map (comp keyword #(.toLowerCase %) name) '(a B C))
+
+#_(
+
+cons
+clojure.core
+
+    (cons x seq)
+
+Returns a new seq where x is the first element and seq is
+the rest.
+
+
+keyword
+clojure.core
+
+    (keyword name)
+    (keyword ns name)
+
+Returns a Keyword with the given namespace and name. Do not use :
+in the keyword strings, it will be added automatically.
+
+
+repeat
+clojure.core
+
+    (repeat x)
+    (repeat n x)
+
+Returns a lazy (infinite!, or length n if supplied) sequence of xs.
+
+
+name
+clojure.core
+
+    (name x)
+
+Returns the name String of a string, symbol or keyword.
+)
