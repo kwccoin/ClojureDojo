@@ -1,3 +1,16 @@
+
+;just a tips on trees with sharing structure:
+(defn xconj [t v]
+  (cond
+    (nil? t)       {:val v, :L nil, :R nil}
+    (< v (:val t)) {:val (:val t),
+                    :L   (xconj (:L t) v),
+                    :R   (:R t)}
+    :else          {:val (:val t),
+                    :L   (:L t),
+                    :R   (xconj (:R t) v)}
+    ))
+
 (defn fetch-url[address]
   (with-open [stream (.openStream (java.net.URL. address))]
     (let  [buf (java.io.BufferedReader. 

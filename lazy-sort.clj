@@ -1,5 +1,9 @@
-(ns joy.q)
+;The lazy qsort will be able to gather the first element beacause it only takes some small subset of comparisons to gather the numbers into left-side smaller and right-side larger partitions and sort those smaller pieces only.
 
+;The benefits?
+;You can take sorted portions of a large sequence without having to pay the cost of sorting its entirety.
+
+(ns joy.q)
 (defn nom [n] (take n (repeatedly #(rand-int n))))
 
 (defn sort-parts
