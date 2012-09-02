@@ -140,6 +140,20 @@ http://nakkaya.com/
 - Fractals in Clojure - Fractal Fern
 http://nakkaya.com/2009/09/28/fractals-in-clojure-fractal-fern/
 
+http://planet.clojure.in/opml.xml
+
+- Monads in Clojure
+http://www.intensivesystems.net/tutorials/monads_101.html
+
+- Higher Level Monads
+http://www.intensivesystems.net/tutorials/monads_201.html
+
+- A Clojure Story
+http://www.clojure.net/archive.html
+
+- clojurebook/ClojureProgramming · GitHub
+https://github.com/clojurebook/ClojureProgramming
+
 ---
 
 - Clojars - jar repository

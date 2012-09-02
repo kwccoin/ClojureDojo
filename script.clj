@@ -8,7 +8,7 @@
     (if o 
       (if (keyword? h)
         (map clea o)
-        (apply str o)
+        (apply str tst)
       )
     )
   )
