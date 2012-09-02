@@ -98,26 +98,22 @@
   (if (and t a c)
   (println "tag: " t " attr: " a " childs: " c)))
 
-;NOPE
+
+(use 'pl.danieljanus.tagsoup)
+(def foo (parse "http://www.example.com"))
 (defn clea [tst] 
-  (loop [[f s t & o] tst,
-         ] 
-    (println " ---> f:" f "| s:" s "| t:" t )
-    (if o 
-       (println "  ---> o:" o))
-    ;(if (vector? t) 
-    (if (vector? t) 
-      (recur t)
-      ;(recur o)))) 
-    ;(if o 
-    ;  (recur o)))) 
-;NOPE
-(defn clea [tri]
-  (loop [[t r i] tri]
-    (println " ---> t:" t "| r:" r "| i:" i )
-    (for [el i] (println "  --> el: " el))
-    (recur i)
-    ))
+  (let [[h p & o] tst,
+        c (count o)
+       ] 
+    (println " ---> h:" h "| p:" p "| c:" c )
+    (if o
+      (if (string? o) 
+        (println "  o:" o)
+        (map clea o)
+      )
+    )
+  )
+)
 
 ;;;;;;;;;;;
 
