@@ -4,7 +4,8 @@
   (let [[h p & o] tst,
         c (count o)
        ]
-    (println " ---> h:" h "| p:" p "| c:" c )
+    ;(println " ---> h:" h "| p:" p "| c:" c )
+    ;(if (and h (= h :a)) (println (p :href)))
     (if o 
       (if (keyword? h)
         (map clea o)
