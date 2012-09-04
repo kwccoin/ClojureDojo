@@ -4,8 +4,13 @@
 (defn parz [src] 
   (let [ttt (tri src)]
     (if (ttt 2)
-      ;(parz (ttt 2))
-      ttt
+      (if (keyword? (ttt 0))
+        (map parz (ttt 2))
+        (if (= (ttt 0) ":a")
+          (ttt 1) 
+          (apply str src)
+        )
+      )
     )
   )
 )
