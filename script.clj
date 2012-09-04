@@ -1,5 +1,14 @@
 (use 'pl.danieljanus.tagsoup)
 (def foo (parse "http://www.example.com"))
+(defn tri [t] (let [[a b & c] t] [a b (vec c)]))
+(defn parz [src] 
+  (let [ttt (tri src)]
+    (if (ttt 2)
+      ;(parz (ttt 2))
+      ttt
+    )
+  )
+)
 (defn clea [tst]
   (let [[h p & o] tst,
         c (count o)

@@ -116,6 +116,18 @@
 )
 
 ;;;;;;;;;;;
+-------------------------
+clojure.core/vec
+([coll])
+  Creates a new vector containing the contents of coll.
+nil
+user=> (doc vector)
+-------------------------
+clojure.core/vector
+([] [a] [a b] [a b c] [a b c d] [a b c d & args])
+  Creates a new vector containing the args.
+-------------------------
+;;;;;;;;;;;
 
 (ns in.grok.history.html-parser
   (:require [clojure.contrib.logging :as log])
