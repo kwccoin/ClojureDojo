@@ -5,6 +5,7 @@
 
 ; the page
 (def foo (parse "http://www.example.com"))
+(def clojure-com (parse "http://clojure.com"))
 
 ; the destructure functions
 (defn tri-vec [parsed-page] (let [[tag property-map & more :as all] parsed-page] [tag property-map (vec more) all]))
@@ -17,28 +18,18 @@
       (if more
         (if (keyword? tag )
           (if (= tag (keyword "a"))
-            (property-map :href)
+            { :more  more :href (property-map :href)}
             (map parz more)
           )
-          (apply str src)
+          ;(apply str src)
         )
       )
     )
   )
 )
-(parz foo )
-(defn clea [tst]
-  (let [[h p & o] tst,
-        c (count o)
-       ]
-    ;(println " ---> h:" h "| p:" p "| c:" c )
-    ;(if (and h (= h :a)) (println (p :href)))
-    (if o 
-      (if (keyword? h)
-        (map clea o)
-        (apply str tst)
-      )
-    )
-  )
-)
-(clea foo)
+(remove nil? (flatten (parz foo)))
+(remove nil? (flatten (parz clojure-com)))
+
+; (map #(str "http://"%1 (%2 :href)) "www.example.com" rez)
+
+
