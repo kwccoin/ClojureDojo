@@ -252,4 +252,22 @@ clojure.core/<
 (defn asd [list] (for [x list y (keyz)] (map str x y)))
 (asd (asd (keyz)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn f [l ls]
+  (loop [li l args ls]
+    (if (empty? args)   
+      li   
+      (recur  
+        (conj li (first args))  
+        (rest args)   
+      )
+    )
+  )
+)
+
+;;user=> (f '(0) '(1 2 3))
+;(3 2 1 0)
+;user=> (f '[0] '(1 2 3))
+;[0 1 2 3]
 

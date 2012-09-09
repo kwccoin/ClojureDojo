@@ -93,6 +93,35 @@
 ; A much simpler version use partition-by:
 #(partition-by identity %)
 
+(fn pack-consecutive [collection-param]
+; utility function for packing the equals elements
+((fn packer [result previous collection]
+  ;work on collection
+  ;but only if collection has some elements
+  (if-let [[head & args] (seq collection)]
+    (if (= head (first previous))
+      ; if head, i.e. the first element in the collection is
+      ; equals to the first element of the sub-list in check
+      ; then add the head in this sub-list (previous) and call packer forward
+      ; with the rest of the collection, called args
+      (packer result (conj previous head) args)
+      ; else add the previous list in the result, 
+      ; create a new previous list to work on and go forward with packer
+      (packer (conj result previous) [head] args)
+    )
+  )
+  ;if the collection is empty then return the last conjunction
+  (conj result previous)
+)
+
+; the packer function start with this initial arguments:
+; result: [] an empty collection
+; previous: [(first collection-param)] the first element of the collection
+; collection: (rest collection-param) the rest of the collection
+[] [(first collection-param)] (rest collection-param)
+))
+
+
 ; 33: Write a function which replicates each element of a sequence n number of
 ; times.
 ; (= (__ [1 2 3] 2) '(1 1 2 2 3 3))
