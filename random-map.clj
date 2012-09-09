@@ -34,6 +34,9 @@
       (zipmap k v))
 ))
 
+(defn med [] (let [m (rand-map 111)] (/ (reduce + (vals m)) (count (vals m)) )))
+(filter #(or (> 0.45 %1) (< 0.55 %1)) (repeatedly 100 med))
+
 ;;;;
 
 (for [x (range) :while (< x 10) 

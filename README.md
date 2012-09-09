@@ -154,6 +154,9 @@ http://www.clojure.net/archive.html
 - clojurebook/ClojureProgramming · GitHub
 https://github.com/clojurebook/ClojureProgramming
 
+- parser - Crawlista
+https://github.com/michaelklishin/crawlista
+
 ---
 
 - Clojars - jar repository
