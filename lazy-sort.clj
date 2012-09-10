@@ -108,4 +108,26 @@ last of which will be treated as a sequence
 ; user=> (list* '(3 1 2) 4 '(9 6))
 ; => ((3 1 2) 4 9 6)
 
+; Lazy principles:
+; use lazy-seq
+; use rest instead of next
+; high-order function when process sequences
+; don't hold the head
 
+(defn lazy-recurrent-step [s]
+  (lazy-seq 
+    (if (seq s)
+      [(first s) (lazy-recurrent-step (rest s))]
+      []
+    )
+  )
+)
+
+(defn simple-range [i limit]
+  (lazy-seq
+    (when (< i limit)
+      (cons i (simple-range (inc i) limit))
+    )
+  )
+)
+ 

@@ -95,10 +95,10 @@
 
 (fn pack-consecutive [collection-param]
 ; utility function for packing the equals elements
-((fn packer [result previous collection]
+((fn packer [result previous collection-param]
   ;work on collection
   ;but only if collection has some elements
-  (if-let [[head & args] (seq collection)]
+  (if-let [[head & args] (seq collection-param)]
     (if (= head (first previous))
       ; if head, i.e. the first element in the collection is
       ; equals to the first element of the sub-list in check
@@ -109,9 +109,9 @@
       ; create a new previous list to work on and go forward with packer
       (packer (conj result previous) [head] args)
     )
+    ;if the collection is empty then return the last conjunction
+    (conj result previous)
   )
-  ;if the collection is empty then return the last conjunction
-  (conj result previous)
 )
 
 ; the packer function start with this initial arguments:
