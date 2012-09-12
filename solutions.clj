@@ -128,28 +128,23 @@
 ;     
 ; Write a function which duplicates each element of a sequence.
 ; (= (__ [1 2 3]) '(1 1 2 2 3 3))
-; (= (__ [:a :a :b :b]) '(:a :a :a :a :b :b :b :b))                                                       
-; (= (__ [[1 2] [3 4]]) '([1 2] [1 2] [3 4] [3 4]))                                                       
-      
+; (= (__ [:a :a :b :b]) '(:a :a :a :a :b :b :b :b))
+; (= (__ [[1 2] [3 4]]) '([1 2] [1 2] [3 4] [3 4]))
 ; Solutions:
-(fn [coll]                                                                                                
+(fn [coll]
   (apply concat (map #(repeat 2 %) coll)))
-    
-;austintaylor's solution:                                                                                 
-#(interleave % %)                                                                                         
-                                                                                                          
+;austintaylor's solution:
+#(interleave % %)
 ;maximental's solution:
 mapcat #(list % %)
-
 ;nikelandjelo's solution:
 (fn [v] (reduce #(conj %1 %2 %2) [] v))
-
-;norman's solution:                                                                                       
-(fn dupl [items]                                                                                          
+;norman's solution:
+(fn dupl [items]  
   (if (empty? items)
     ()
-    (let [f (first items) r (rest items)]                                                                 
-      (concat [f f] (dupl r)))))                                                                          
+    (let [f (first items) r (rest items)]
+      (concat [f f] (dupl r)))))
 ;;;  
 
 (fn duper [sequ]
@@ -175,11 +170,112 @@ mapcat #(list % %)
 (fn [coll n]
   (mapcat #(repeat n %) coll))
 
+#_(
+-------------------------
+clojure.core/map
+([f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])
+  Returns a lazy sequence consisting of the result of applying f to the
+  set of first items of each coll, followed by applying f to the set
+  of second items in each coll, until any one of the colls is
+  exhausted.  Any remaining items in other colls are ignored. Function
+  f should accept number-of-colls arguments.
+-------------------------
+clojure.core/mapcat
+([f & colls])
+  Returns the result of applying concat to the result of applying map
+  to f and colls.  Thus function f should return a collection.
+-------------------------
+clojure.core/concat
+([] [x] [x y] [x y & zs])
+  Returns a lazy seq representing the concatenation of the elements in the supplied colls.
+-------------------------
+clojure.core/repeatedly
+([f] [n f])
+  Takes a function of no args, presumably with side effects, and
+  returns an infinite (or length n if supplied) lazy sequence of calls
+  to it
+-------------------------
+-------------------------
+clojure.core/repeat
+([x] [n x])
+  Returns a lazy (infinite!, or length n if supplied) sequence of xs.
+)   
+    
+; 33. Replicate a Sequence
+; 
+; Difficulty: Easy
+; Topics: seqs
+; 
+; Write a function which replicates each element 
+; of a sequence a variable number of times.
+; (= (__ [1 2 3] 2) '(1 1 2 2 3 3))
+; (= (__ [:a :b] 4) '(:a :a :a :a :b :b :b :b))
+; ( = (__ [4 5 6] 1) '(4 5 6))
+; (= (__ [[1 2] [3 4]] 2) '([1 2] [1 2] [3 4] [3 4]))
+; (= (__ [44 33] 2) [44 44 33 33]) 
+          
+(fn replicator [collection times]
+  (mapcat #(repeat times %) collection))
+; norman's solution:
+#(mapcat (partial repeat %2) %1)
+; nikelandjelo's solution:
+#(apply concat (map (partial repeat %2) %1))
+
 ; 34: Write a function which creates a list of all integers in a given range.
 ; (= (__ 1 4) '(1 2 3))
 ; forbidden: range
 (fn [s e]
   (take (- e s) (iterate inc s)))
+
+;34. Implement range
+; 
+; Difficulty: Easy
+; Topics: seqs core-functions
+; Special restrictions: range
+;
+; Write a function which creates a list of all integers in a given range.
+; (= (__ 1 4) '(1 2 3))
+; (= (__ -2 2) '(-2 -1 0 1))
+; (= (__ 5 8) '(5 6 7))
+
+(fn ranger [from to]
+  (take (- to from) (iterate inc from)))
+
+; norman's solution:
+(fn [start end]
+  (seq
+   (loop [i start vals []]
+     (if (= i end)
+       vals
+       (recur (inc i) (conj vals i))))))
+
+(defn vrange2 [n]
+  (loop [i 0 v (transient [])]
+    (if (< i n)
+      (recur (inc i) (conj! v i))
+      (persistent! v))))
+
+#_(
+-------------------------
+clojure.core/lazy-seq
+([& body])
+Macro
+  Takes a body of expressions that returns an ISeq or nil, and yields
+  a Seqable object that will invoke the body only the first time seq
+  is called, and will cache the result and return it on all subsequent
+  seq calls.
+-------------------------
+clojure.core/while 
+([test & body]) 
+Macro
+  Repeatedly executes body while test expression is true. Presumes
+  some side-effect will cause test to become false/nil. Returns nil
+-------------------------
+clojure.core/iterate
+([f x])
+  Returns a lazy sequence of x, (f x), (f (f x)) etc. f must be free of side-effects
+)
+
 
 ; 38: Write a function which takes a variable number of parameters and returns
 ; the maximum value.

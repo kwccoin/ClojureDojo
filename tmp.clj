@@ -1,81 +1,48 @@
-((fn duper [sequ]
-  (let [s (seq sequ)]
-  (lazy-seq 
-    (loop [f (first s) 
-           r (rest s)]
-      '(f f)
-      (if (not (empty? r)) (recur (first r)(rest r)))))))
-[1 2 3])
-
-
-((fn duper [sequ]
-  (flatten (for [e (seq sequ)] (list e e))))
-[1 2 3])
-
-((fn duper [sequ]
-  (for [e (seq sequ)] (list e e)))
-[1 2 3])
-
-(
-(fn duper [sequ]
-  (let [s (seq sequ)]
-    (lazy-seq
-      (loop [f (first s)    
-             r (rest s)
-             result (list)] 
-        ;(println "f: "f" r: "r" result: "result)
-        (if (empty? r) 
-          (reverse (cons (list f f) result))
-          (recur 
-            (first r)
-            (rest r)
-            (cons (list f f) result)))))))
-[1 2 3 4])
-
-;;;;
-; 32. Duplicate a Sequence
+;34. Implement range
 ; 
 ; Difficulty:	Easy
-; Topics:	seqs
-; 
-; Write a function which duplicates each element of a sequence.
-; (= (__ [1 2 3]) '(1 1 2 2 3 3))
-; (= (__ [:a :a :b :b]) '(:a :a :a :a :b :b :b :b))
-; (= (__ [[1 2] [3 4]]) '([1 2] [1 2] [3 4] [3 4]))
+; Topics:	seqs core-functions
+; Special restrictions: range
+;
+; Write a function which creates a list of all integers in a given range.
+; (= (__ 1 4) '(1 2 3))
+; (= (__ -2 2) '(-2 -1 0 1))
+; (= (__ 5 8) '(5 6 7))
 
-; Solutions:
-(fn [coll]
-  (apply concat (map #(repeat 2 %) coll)))
+(fn ranger [from to]
+  (take (- to from) (iterate inc from)))
 
-;austintaylor's solution:
-#(interleave % %)
+; norman's solution:
+(fn [start end]
+  (seq
+   (loop [i start vals []]
+     (if (= i end)
+       vals
+       (recur (inc i) (conj vals i))))))
 
-;maximental's solution:
-mapcat #(list % %)
+(defn vrange2 [n]
+  (loop [i 0 v (transient [])]
+    (if (< i n)
+      (recur (inc i) (conj! v i))
+      (persistent! v))))
 
-;nikelandjelo's solution:
-(fn [v] (reduce #(conj %1 %2 %2) [] v))
-
-;norman's solution:
-(fn dupl [items]
-  (if (empty? items)
-    ()
-    (let [f (first items) r (rest items)]
-      (concat [f f] (dupl r)))))
-;;;
-
-(
-(fn duper [sequ]
-  (let [s (seq sequ)]
-    (lazy-seq
-      (loop [f (first s)  
-             r (rest s)
-             result (list)] 
-        (println "f: "f" r: "r" result: "result)
-        (if (empty? r)  
-          (reverse (concat (repeat 2 f) result))
-          (recur 
-            (first r)
-            (rest r)
-            (concat (repeat 2 f) result)))))))
-[1 2 3])
+#_(
+-------------------------
+clojure.core/lazy-seq
+([& body])
+Macro
+  Takes a body of expressions that returns an ISeq or nil, and yields
+  a Seqable object that will invoke the body only the first time seq
+  is called, and will cache the result and return it on all subsequent
+  seq calls.
+-------------------------
+clojure.core/while
+([test & body])
+Macro
+  Repeatedly executes body while test expression is true. Presumes
+  some side-effect will cause test to become false/nil. Returns nil
+-------------------------
+clojure.core/iterate
+([f x])
+  Returns a lazy sequence of x, (f x), (f (f x)) etc. f must be free of side-effects
+)
