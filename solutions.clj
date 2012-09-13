@@ -290,12 +290,168 @@ clojure.core/iterate
 ; forbidden: interleave
 #(mapcat vector %1 %2) 
 
+; 39. Interleave Two Seqs
+;
+; Difficulty:     Easy
+; Topics: seqs core-functions
+; Write a function which takes two sequences and returns the first item
+; from each, then the second item from each, then the third, etc.
+; Special Restrictions: interleave
+; (= (__ [1 2 3] [:a :b :c]) '(1 :a 2 :b 3 :c))
+; (= (__ [1 2] [3 4 5 6]) '(1 3 2 4))
+; (= (__ [1 2 3 4] [5]) [1 5])
+; (= (__ [30 20] [25 15]) [30 25 20 15])
+
+(
+(fn interleaver [coll1 coll2]
+  (lazy-seq
+    (let [seq1 (seq coll1)
+          seq2 (seq coll2)]
+      (when (and seq1 seq2)
+        (cons              ;outer-cons
+              (first seq1) ;first arg for outer-cons
+              (cons        ;second arg for outer-cons and inner-cons
+                    (first seq2) ;first arg for inner-cons
+                    (interleaver (rest seq1) (rest seq2)) ;second arg for inner-cons
+              ))))))
+[1 2 3] [:a :b :c])
+
+; Solutions:
+; austintaylor's solution:
+(fn [a0 b0]
+  (loop [a a0 b b0 result '()]
+    (if (and (seq a) (seq b))
+      (recur
+        (rest a)
+        (rest b)
+        (conj result (first a) (first b)))
+      (reverse result))))
+; maximental's solution:
+mapcat list
+; nikelandjelo's solution:
+(fn inter [a b]
+            (if (or (empty? a) (empty? b))
+                []
+                (concat [(first a) (first b)] (inter (rest a) (rest b)))))
+; norman's solution:
+(fn smash [one two]
+  (when (every? not-empty [one two])
+    (concat [(first one) (first two)] (smash (rest one) (rest two)))))
+
+#_(
+-------------------------
+clojure.core/cons
+([x seq])
+  Returns a new seq where x is the first element and seq is
+    the rest.
+-------------------------
+clojure.core/when
+([test & body])
+Macro
+  Evaluates test. If logical true, evaluates body in an implicit do.
+-------------------------
+clojure.core/lazy-seq
+([& body])
+Macro
+  Takes a body of expressions that returns an ISeq or nil, and yields
+  a Seqable object that will invoke the body only the first time seq
+  is called, and will cache the result and return it on all subsequent
+  seq calls.
+-------------------------
+clojure.core/interleave
+([c1 c2] [c1 c2 & colls])
+  Returns a lazy seq of the first item in each coll, then the second etc.
+
+   ;; This example takes a list of keys and a separate list of values and
+   ;; inserts them into a map.
+   (apply assoc {}
+      (interleave [:fruit :color :temp]
+          ["grape" "red" "hot"]))
+
+  ; {:temp "hot", :color "red", :fruit "grape"}
+
+  ;; Simple example:
+  (interleave [:a :b :c] [1 2 3])
+  ; (:a 1 :b 2 :c 3)
+)
+
+; Source:
+(defn interleave
+  "Returns a lazy seq of the first item in each coll, then the second etc."
+  {:added "1.0"
+   :static true}
+  ([c1 c2]
+     (lazy-seq
+      (let [s1 (seq c1) s2 (seq c2)]
+        (when (and s1 s2)
+          (cons (first s1) (cons (first s2)
+                                 (interleave (rest s1) (rest s2))))))))
+  ([c1 c2 & colls]
+     (lazy-seq
+      (let [ss (map seq (conj colls c2 c1))]
+        (when (every? identity ss)
+          (concat (map first ss) (apply interleave (map rest ss))))))))
+
+; ---
+
+
 ; 40: Write a function which separates the items of a sequence by an arbitrary
 ; value.
 ; (= (__ 0 [1 2 3]) [1 0 2 0 3])
 ; forbidden: interpose
 (fn [sep coll]
   (drop-last (mapcat vector coll (repeat sep))))
+
+; 40. Interpose a Seq
+;
+; Difficulty: Easy
+; Topics: seqs core-functions
+; 
+; Write a function which separates the items of a sequence by an arbitrary value.
+; (= (__ 0 [1 2 3]) [1 0 2 0 3])
+; (= (apply str (__ ", " ["one" "two" "three"])) "one, two, three")
+; (= (__ :z [:a :b :c :d]) [:a :z :b :z :c :z :d])
+; 
+; Special Restrictions
+; interpose
+
+#_(
+-------------------------
+interpose
+clojure.core
+    (interpose sep coll)
+Returns a lazy seq of the elements of coll separated by sep 
+    
+  ;; The quintessential interpose example:
+      user> (def my-strings ["one" "two" "three"])
+         
+      user> (interpose ", " my-strings)
+      => ("one" ", " "two" ", " "three")
+         
+      user> (apply str (interpose ", " my-strings))
+      => "one, two, three"
+         
+      ;; Might use clojure.string/join if the plan is to join
+      (use '[clojure.string :only (join)])
+      user> (join ", " my-strings)
+      => "one, two, three"
+)
+
+; Source:
+1 (defn interpose
+2   "Returns a lazy seq of the elements of coll separated by sep"
+3   {:added "1.0"
+4    :static true}
+5   [sep coll] (drop 1 (interleave (repeat sep) coll)))
+
+; Solutions:
+
+(fn interposer
+  [sep coll] (drop 1 (interleave (repeat sep) coll)))
+
+; nikelandjelo's solution:
+(fn [v s] (butlast (reduce #(conj %1 %2 v) [] s)))
+
 
 ; 41: Write a function which drops every Nth item from a sequence.
 ; (= (__ [1 2 3 4 5 6 7 8] 3) [1 2 4 5 7 8])  
