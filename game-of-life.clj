@@ -45,15 +45,6 @@
 ; [" " " " "X" " "]
 ; [" " " " " " "X"]]
 
-; Now, instead of writing a function which behaves exactly according 
-; to the rules of Conway's Game of Life, we could write a high-order
-; function that takes three arguments: A function to determine the
-; neighbours, a predicate which determines whether a cell shall be
-; given life (e.g. #{3} for Conway's rules) and one predicate that
-; determines whether a cell survives to the next generation (#{2 3}).
-; It then returns a function which calculates the next generation
-; according to the given rules.
-
 (defn neighbours
   "Determines all the neighbours of a given coordinate"
   [[x y]]
@@ -63,6 +54,15 @@
 
 (neighbours [1 1])
 ; => ([0 0] [0 1] [0 2] [1 0] [1 2] [2 0] [2 1] [2 2])
+
+; Now, instead of writing a function which behaves exactly according 
+; to the rules of Conway's Game of Life, we could write a high-order
+; function that takes three arguments: A function to determine the
+; neighbours, a predicate which determines whether a cell shall be
+; given life (e.g. #{3} for Conway's rules) and one predicate that
+; determines whether a cell survives to the next generation (#{2 3}).
+; It then returns a function which calculates the next generation
+; according to the given rules.
 
 (defn stepper
   "Returns a step function for Life-like cell automata.
@@ -89,6 +89,16 @@
                     ; to the predicate birth? to give that cell life.
                   ]
                   loction))))
+; stepper returns a function
+; stepper needs 3 args and the inner function 1.
+
+((stepper             ; the function
+  neighbours          ; the first parameter
+   #{3}               ; the second parameter
+   #{2 3}             ; the third parameter
+ )
+ #{[1 0] [1 1] [1 2]} ; the parameter for the inner function returned by stepper
+)
 
 ; the horizontal position of the blinker
 (create-world 4 4 #{[1 0][1 1][1 2]})
@@ -112,9 +122,14 @@
 (def light-spaceship #{[2 0] [4 0] [1 1] [1 2] [1 3] [4 3] [1 4] [2 4] [3 4]})
  
 ; Stepper
+; where birth? clause is #{3}
+; and survive? clause is #{2 3}
 (def conway-stepper (stepper neighbours #{3} #{2 3}))
 
 ; The final function
+; The engine of the Conway function is the (conway-)stepper function.
+; The stepper return a function from a set of coordinates
+; of living cell, maybe a pattern.
 (defn conway
   "Generates world of given size with initial pattern 
     in specified generation"
@@ -124,6 +139,21 @@
          first
          (create-world width height)
          (map println)))
+
+; to better understand the call of conway:
+; (use 'clojure.walk)
+; (macroexpand-all 
+;       '(->> (iterate conway-stepper pattern)
+;        (drop iterations)
+;        first
+;        (create-world w h)
+;        (map println)))
+;=>  (map println 
+;      (create-world w h 
+;        (first 
+;          (drop iterations 
+;            (iterate conway-stepper pattern)))))
+; the combo first/drop/iterate is used to reach the desired iteration
 
 ;test it out:
 (conway [5 15] light-spaceship 0)
