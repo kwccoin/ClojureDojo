@@ -93,3 +93,17 @@ nil
 )
 ;=> :expensive
 
+; 7.1.4 - Named Arguments
+(defn slope
+  [& {:keys [p1 p2] :or {p1 [0 0] p2 [1 1]}}]
+  ; &      variadic parameter in a seq
+  ; :as    bind a local to the entire collection
+  ; :keys  the next form will be a vector of names the it should
+  ;        convert to keywords
+  ; :strs  Clojure would be looking for items in the map with string keys
+  ; :syms  for symbol keys
+  ; :or    if a key is not in the map, the default value is this
+  (float (/ (- (p2 1) (p1 1))
+            (- (p2 0) (p1 0)))))
+
+; ---
