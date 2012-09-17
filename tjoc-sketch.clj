@@ -112,4 +112,89 @@ nil
   (/ (- (p2 1) (p1 1))
      (- (p2 0) (p1 0))))
 
+; Functional Programming - 7.2
+; Sharing closure context
+
+(def bearing [{:x  0, :y  1} ; north 0#
+              {:x  1, :y  0} ; east  1#
+              {:x  0, :y -1} ; south 2#
+              {:x -1, :y  0} ; west  3#
+             ])
+
+(defn forward [x y bearing-num]
+  [(+ x (:x (bearings bearing-num)))
+   (+ y (:y (bearings bearing-num)))])
+
+(forward 5 5 0)
+;=> [5 6]
+
+; multiple closures sharing the same environment
+
+(defn bot [x y bearing-num]
+  {:coords [x y]
+   :bearing ([:north :east :south: west] bearing-num)
+   :forwar (fn [] (bot (+ x (:x (bearings bearing-num)))
+                       (+ y (:y (bearings bearing-num)))
+                       bearing-num))
+   :turn-right (fn [] (boc x y (mod (+ 1 bearing num) 4)))
+   :turn-left  (fn [] (boc x y (mod (- 1 bearing num) 4)))
+  })
+
+; Listing 7.6 - Using mutually recursive functions to implement a 
+; finite state machine (FSA)
+(defn elevator [commands]
+  (letfn 
+    [(ff-open [[cmd & r]]
+      "When the elevator is open on the 1st floor
+       it can either close o be done."
+       #(case cmd
+          :close (ff-closed r)
+          :done   true
+          false))
+      (ff-closed [[cmd & r]]
+        "When the elevator is closed on the 1st floor
+         it can either open or go up."
+         #(case cmd
+            :open (ff-open r)
+            :up   (sf-closed r)
+            false))
+       (sf-closed [[cmd & r]]
+         "When the elveator is colosed on the 2nd floor
+          it can either go down or open."
+          #(case cmd
+             :down (ff-closed r)
+             :open (sf-open r)
+             false))
+        (sf-open [[cmd & r]]
+          "When the elevator is open on the 2nd floorr
+           it can either close or be done."
+           #(case cmd
+              :close (sf-closed r)
+              :done   true
+              false))]
+     (trampoline ff-open commands)))
+
+(elevator [:close :open :close :up :open :open :done])
+;=> false
+
+(elevator [:close :up :open :close :down :open :done])
+;=> true
+
+
+#_(
+
+trampoline
+clojure.core
+
+    (trampoline f)
+    (trampoline f & args)
+
+trampoline can be used to convert algorithms requiring mutual
+recursion without stack consumption. Calls f with supplied args, if
+any. If f returns a fn, calls that fn with no arguments, and
+continues to repeat, until the return value is not a fn, then
+returns that non-fn value. Note that if you want to return a fn as a
+final value, you must wrap it in some data structure and unpack it
+after trampoline returns.)
+
 ; ---
