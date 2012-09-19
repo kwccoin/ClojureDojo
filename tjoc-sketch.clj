@@ -197,4 +197,60 @@ returns that non-fn value. Note that if you want to return a fn as a
 final value, you must wrap it in some data structure and unpack it
 after trampoline returns.)
 
+; Rules for the mutual recursion (general rules)
+; 1. Make all the functions participating in the mutual recursion return a function instead of their normal result. Normally this is as simple as tacking a # onte the front of the outer level of the function body.
+; 2. Invoke the first function in the mutual chain via the trampoline function.
+; The trampoline function handles the process of the self calls through the placement of the functions within a list where each function is "bounced" cack and forth explicitly.
+
+; ----------------------------
+
+; 7.4 - A* pathfinding
+
+;given a point 'xy' and a 'size'
+;neighbours return the vector of the
+;cross coordinates surround the point
+;and filtered by the existence.
+
+(defn neighbours 
+  ; deltas are the 'cross' coordinates to check
+  ; xy are the coordinates of a point
+  ; size, the distance to check
+  ([size xy] 
+    (let [deltas [[-1 0][1 0][0 -1][0 1]]] (neighbours deltas size xy)))
+  ([deltas size xy]
+    (filter 
+    ;filter needs a predicate, so I define one here:
+      (fn [xys-to-check] (every? #(< -1 % size) xys-to-check))
+      ;this predicate just check that every point in xys-to-check, that must be a collection, is inside the 1st quadrant. A predicate must return a Boolean value. It use the '<' function with the 3rd parameter that means the size of the quadrant
+    (map #(map + % xy) deltas) 
+    ;this map find the vector of cross coordinates and is checked by the predicate i.e. filtered.
+)))
+
+(neighbors 5 [0 0])
+;=> ([1 0] [0 1])
+
+; 7.9 - A straight-line h function to estimate remaining path cost
+(defn estimate-cost [step-cost-est size x y]
+  (* step-cost-est
+    (- (+ size size) y x 2)))
+
+(estimate-cost 900 5 0 0)
+;=> 7200
+
+; 7.10 - A g function used to calculate the cost of the path traversed so far
+(defn path-cost [node-cost cheapest-nbr]
+  (+ node-cost
+    (:cost cheapest-nbr 0)))
+
+(path-cost 900 {:cost 1})
+;=> 901
+
+; 7.11 - f function to calculate the estimated cost of the path (+ (g ...) (h ...))
+(defn total-cost [newcost step-cost-est size y x]
+  (+ newcost
+    (estimate-cost step-cost-est size y x)))
+
+(total-cost 1000 900 5 3 4)
+;=> 1900
+
 ; ---
