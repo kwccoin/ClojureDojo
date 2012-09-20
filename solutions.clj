@@ -463,6 +463,182 @@ Returns a lazy seq of the elements of coll separated by sep
 ; We partition the sequence, drop last one from each, then stitch them back
 ; take care the remaining elements too
 
+; 41. Drop Every Nth Item
+;
+; Difficulty: Easy
+; Topics: seqs
+;
+; Write a function which drops every Nth item from a sequence.
+; (= (__ [1 2 3 4 5 6 7 8] 3) [1 2 4 5 7 8])
+; (= (__ [:a :b :c :d :e :f] 2) [:a :c :e])
+; (= (__ [1 2 3 4 5 6] 4) [1 2 3 5 6])
+
+#_(
+user=> (doc rem)
+-------------------------
+clojure.core/rem
+([num div])
+  remainder of dividing numerator by denominator.
+nil
+user=> (doc drop-last)
+-------------------------
+clojure.core/drop-last
+([s] [n s])
+  Return a lazy sequence of all but the last n (default 1) items in coll
+nil
+user=> (doc take-last)
+-------------------------
+clojure.core/take-last
+([n coll])
+  Returns a seq of the last n items in coll.  Depending on the type
+  of coll may be no better than linear time.  For vectors, see also subvec.
+nil
+user=> (doc flatten)
+-------------------------
+clojure.core/flatten
+([x])
+  Takes any nested combination of sequential things (lists, vectors,
+  etc.) and returns their contents as a single, flat sequence.
+  (flatten nil) returns nil.
+nil
+user=> (doc concat)
+-------------------------
+clojure.core/concat
+([] [x] [x y] [x y & zs])
+  Returns a lazy seq representing the concatenation of the elements in
+the supplied colls.
+nil
+user=> (doc map)
+-------------------------
+clojure.core/map
+([f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])
+  Returns a lazy sequence consisting of the result of applying f to the
+  set of first items of each coll, followed by applying f to the set
+  of second items in each coll, until any one of the colls is
+  exhausted.  Any remaining items in other colls are ignored. Function
+  f should accept number-of-colls arguments.
+nil
+user=>
+)
+
+user=> (doc split-at)
+-------------------------
+clojure.core/split-at
+([n coll])
+  Returns a vector of [(take n coll) (drop n coll)].
+nil
+user=>
+)
+
+
+(defn dropper [coll n]
+  (let [ [h t] (split-at n coll)]
+    (do (println h " - " t)
+      (if (< n (count (seq t)))
+        (flatten (cons (drop-last h)  (dropper (seq t) n)))
+        (flatten (cons (drop-last h)  (seq t)))
+      )
+    )))
+
+
+(= ( 
+(fn dropper [coll n]
+  (let [ [h t] (split-at n coll)]
+    (do (println h " - " t)
+      (if (< n (count (seq t)))
+        (flatten (cons (drop-last h)  (dropper (seq t) n)))
+        (flatten (cons (drop-last h)  (seq t)))
+      )
+    )))
+[1 2 3 4 5 6 7 8] 3) [1 2 4 5 7 8])
+;= true
+
+(= ( 
+(fn dropper [coll n]
+  (let [ [h t] (split-at n coll)]
+    (do (println h " - " t)
+      (if (<= n (count (seq t)))
+        (flatten (cons (drop-last h)  (dropper (seq t) n)))
+        (flatten (cons (drop-last h)  (seq t)))
+      )
+    )))
+[:a :b :c :d :e :f] 2) [:a :c :e])
+;= true
+
+;Solutions:
+(fn dropper [coll n]
+  (let [ [h t] (split-at n coll)]
+    (do (println h " - " t)
+      (if (<= n (count (seq t)))
+        (flatten (cons (drop-last h)  (dropper (seq t) n)))
+        (flatten (cons (drop-last h)  (seq t)))
+      )
+    )))
+; austintaylor's solution:
+(fn [s x]
+  (keep-indexed
+    (fn [i a] (when (> (mod (inc i) x) 0) a))
+    s))
+; maximental's solution:
+#(apply concat (partition-all (- %2 1) %2 %))
+; nikelandjelo's solution:
+(fn [s v] (remove nil? (map-indexed #(if (zero? (rem (inc %1) v)) nil %2) s)))
+; norman's solution:
+#(mapcat identity (partition-all (- %2 1) %2 %1))
+
+#_(
+user=> (doc identity)
+-------------------------
+clojure.core/identity
+([x])
+  Returns its argument.
+nil
+user=> (doc partition)
+-------------------------
+clojure.core/partition
+([n coll] [n step coll] [n step pad coll])
+  Returns a lazy sequence of lists of n items each, at offsets step
+  apart. If step is not supplied, defaults to n, i.e. the partitions
+  do not overlap. If a pad collection is supplied, use its elements as
+  necessary to complete last partition upto n items. In case there are
+  not enough padding elements, return a partition with less than n items.
+nil
+user=> (doc partition-all)
+-------------------------
+clojure.core/partition-all
+([n coll] [n step coll])
+  Returns a lazy sequence of lists like partition, but may include
+  partitions with fewer than n items at the end.
+nil
+user=> (doc keep-indexed)
+-------------------------
+clojure.core/keep-indexed
+([f coll])
+  Returns a lazy sequence of the non-nil results of (f index item). Note,
+  this means false return values will be included.  f must be free of
+  side-effects.
+nil
+user=> (doc map-indexed)
+-------------------------
+clojure.core/map-indexed
+([f coll])
+  Returns a lazy sequence consisting of the result of applying f to 0
+  and the first item of coll, followed by applying f to 1 and the second
+  item in coll, etc, until coll is exhausted. Thus function f should
+  accept 2 arguments, index and item.
+nil
+user=> 
+user=> (keep-indexed #(if (pos? %2) %1) [-9 0 29 -7 45 3 -8])
+(2 4 5)
+;; f takes 2 args: 'index' and 'value' where index is 0-based
+;; when f returns nil the index is not included in final result
+user=> (keep-indexed (fn [idx v]
+                       (if (pos? v) idx)) [-9 0 29 -7 45 3 -8])
+(2 4 5)
+)
+
+; ----
+
 ; 42: Write a function which calculates factorials.
 ; (= (__ 5) 120)
 (fn [n]
