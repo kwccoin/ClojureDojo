@@ -645,6 +645,79 @@ user=> (keep-indexed (fn [idx v]
   (apply * (range 1 (inc n))))
 ; clojure arithmetic functions can take a variable number of arguments
 
+; #42
+; Factorial Fun
+; 
+; Difficulty:	Easy
+; Topics:	math
+; 
+; Write a function which calculates factorials.
+; (= (__ 1) 1)
+; (= (__ 3) 6)
+; (= (__ 5) 120)
+; (= (__ 8) 40320)
+;
+; The factorial function is formally defined by
+;    n!=\prod_{k=1}^n k \!
+; or recursively defined by
+;    n! = \begin{cases} 
+;           1 & \text{if } n = 0, 
+;           \\ (n-1)!\times n &
+;             \text{if } n > 0. 
+;           \end{cases}
+; The recurrence relation (n + 1)! = n! × (n + 1), valid for n > 0, extends to n = 0.
+
+(fn my-fact [n]
+  (if (zero? n)
+    1
+      (* (my-fact (dec n)) n)))
+
+; austintaylor's solution:
+(fn [x]
+  (reduce * (range 1 (inc x))))
+; maximental's solution:
+#(apply * % (range 2 %))
+; nikelandjelo's solution:
+#(apply * (range 1 (inc %)))
+
+#_(
+user=> (doc *)
+-------------------------
+clojure.core/*
+([] [x] [x y] [x y & more])
+  Returns the product of nums. (*) returns 1.
+nil
+user=> (doc range)
+-------------------------
+clojure.core/range
+([] [end] [start end] [start end step])
+  Returns a lazy seq of nums from start (inclusive) to end
+  (exclusive), by step, where start defaults to 0, step to 1, and end
+  to infinity.
+nil
+user=> (doc apply)
+-------------------------
+clojure.core/apply
+([f args* argseq])
+  Applies fn f to the argument list formed by prepending args to argseq.
+nil
+user=> (doc reduce)
+-------------------------
+clojure.core/reduce
+([f coll] [f val coll])
+  f should be a function of 2 arguments. If val is not supplied,
+  returns the result of applying f to the first 2 items in coll, then
+  applying f to that result and the 3rd item, etc. If coll contains no
+  items, f must accept no arguments as well, and reduce returns the
+  result of calling f with no arguments.  If coll has only 1 item, it
+  is returned and f is not called.  If val is supplied, returns the
+  result of applying f to val and the first item in coll, then
+  applying f to that result and the 2nd item, etc. If coll contains no
+  items, returns val and f is not called.
+nil
+user=> 
+)
+
 ; 43: Write a function which reverses the interleave process into n number of
 ; subsequences.
 ; (= (__ [1 2 3 4 5 6] 2) '((1 3 5) (2 4 6)))
