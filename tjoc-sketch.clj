@@ -206,17 +206,17 @@ after trampoline returns.)
 
 ; 7.4 - A* pathfinding
 
-;given a point 'xy' and a 'size'
-;neighbours return the vector of the
+; Neighbours function.
+; Given a point 'xy' and a 'size'
+;neighbors return the vector of the
 ;cross coordinates surround the point
 ;and filtered by the existence.
-
-(defn neighbours 
+(defn neighbors 
   ; deltas are the 'cross' coordinates to check
   ; xy are the coordinates of a point
   ; size, the distance to check
   ([size xy] 
-    (let [deltas [[-1 0][1 0][0 -1][0 1]]] (neighbours deltas size xy)))
+    (let [deltas [[-1 0][1 0][0 -1][0 1]]] (neighbors deltas size xy)))
   ([deltas size xy]
     (filter 
     ;filter needs a predicate, so I define one here:
@@ -230,6 +230,8 @@ after trampoline returns.)
 ;=> ([1 0] [0 1])
 
 ; 7.9 - A straight-line h function to estimate remaining path cost
+; "from the current point [x y], calculate the expected cost by
+; assuming we can travel to the right edge, the down to the lower-right."
 (defn estimate-cost [step-cost-est size x y]
   (* step-cost-est
     (- (+ size size) y x 2)))
@@ -237,7 +239,8 @@ after trampoline returns.)
 (estimate-cost 900 5 0 0)
 ;=> 7200
 
-; 7.10 - A g function used to calculate the cost of the path traversed so far
+; 7.10 - A g function used to calculate the cost of the path traversed
+; so far. Add cheapest neighbor cost, else 0.
 (defn path-cost [node-cost cheapest-nbr]
   (+ node-cost
     (:cost cheapest-nbr 0)))
@@ -245,12 +248,182 @@ after trampoline returns.)
 (path-cost 900 {:cost 1})
 ;=> 901
 
-; 7.11 - f function to calculate the estimated cost of the path (+ (g ...) (h ...))
+; 7.11 - A f function to calculate the estimated cost of the path (+ (g ...) (h ...))
 (defn total-cost [newcost step-cost-est size y x]
   (+ newcost
     (estimate-cost step-cost-est size y x)))
 
 (total-cost 1000 900 5 3 4)
 ;=> 1900
+
+; Three functions:
+; - h: estimated cost
+; - g: current cost
+; - f: total cost
+
+; Auxiliary function
+(defn min-by [f coll]
+  (when (seq coll)
+    (reduce (fn [min this]
+      (if (> (f min) (f this)) this min))
+    coll)))
+
+(min-by :cost [{:cost 100} {:cost 36} {:cost 42}])
+
+; The A* algorithm implemented as tail-recursive solution.
+; 7.12 - the main A* algorithm
+(defn astar [start-yx step-est cell-costs]
+  (let [size (count cell-costs)]
+    (loop [;the number of steps 
+           steps 0
+           ;the matrix of routes
+           routes (vec (replicate size (vec (replicate size nil))))
+           ; The soul of A* is based on the fact that the
+           ; potential paths stored in work-todo are always
+           ; sorted and distinct, based on the estimated 
+           ; path cost function
+           work-todo (sorted-set [0 start-yx])]
+      (if (empty? work-todo) ;check done
+        ; if the work-todo is empty the algorithm ends here and
+        ; return the first route and the number of steps
+        [(peek (peek routes)) :steps steps] ;grab first route
+        ; the prepare the variables and start searching...
+        (let [
+              ; the work-item is a point to start from
+              ; skipping the first element of the work-todo item
+              [_ yx :as work-item] (first work-todo)
+              ; remove the work-item from the work-todo
+              rest-work-todo (disj work-todo work-item)
+              ; nbr-yxs contains the list of neighbors
+              nbr-yxs (neighbors size yx)
+              ; considering the neighbors, keeping the yx in routes,
+              ; take the one with minimum cost
+              cheapest-nbr (min-by :cost (keep #(get-in routes %)
+                                           nbr-yxs))
+              ; updating the new path-cost
+              ; taking the yx's cost from cell-costs.
+              ; newcost is the cost so far for the cheapest neighbor
+              newcost (path-cost (get-in cell-costs yx) cheapest-nbr)
+              ; save the current cost, the cost-so-far
+              oldcost (:cost (get-in routes yx))]
+          ; with the variables setted, check if the newcost
+          ; is greater than the oldcost.
+          ; This is the main check of the A*
+          (if (and oldcost (>= newcost oldcost))
+            ; newcost is greater the oldcost, so throw away this new path
+            ; beacause its clearly a wore alternative.
+            (recur 
+              (inc steps) 
+              routes 
+              rest-work-todo)
+            ; core functionality: constant sort of the work-todo, based
+            ; on the cost og the path as determined by the heuristica
+            ; function total-cost.
+            (recur 
+              (inc steps)
+              (assoc-in routes yx
+                {:cost newcost
+                 :yxs (conj (:yxs cheaperst-nbr []) yx)
+                })
+              ; add estimated path to todo and recur
+              ; Each recursive loop through the astar function
+              ; maintains the sorted routes based on the current
+              ; cost knowledge of the path, added to the estimated
+              ; total cost.
+              (into rest-work-todo
+                (map 
+                  (fn [w]
+                    (let [
+                      [y x] w]
+                      [(total-cost newcost step-est size y x) w])
+                  )
+                  nbr-yxs)
+              )    
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+; tjoc=> (doc peek)
+; -------------------------
+; clojure.core/peek
+; ([coll])
+;  For a list or queue, same as first, for a vector, same as, but much
+;  more efficient than, last. If the collection is empty, returns nil.
+; nil
+; tjoc=> (peek (list 1 2 3 4))
+; 1
+; tjoc=> (peek (vector 1 2 3 4))
+; 4
+; tjoc=> (doc vec)
+; -------------------------
+; clojure.core/vec
+; ([coll])
+;   Creates a new vector containing the contents of coll.
+; nil
+; tjoc=> (doc vector)
+; -------------------------
+; clojure.core/vector
+;([] [a] [a b] [a b c] [a b c d] [a b c d & args])
+;   Creates a new vector containing the args.
+; nil
+; tjoc=> (doc replicate)
+; -------------------------
+; clojure.core/replicate
+; ([n x])
+;   Returns a lazy seq of n xs.
+; nil 
+; tjoc=> (get-in {:a {:b {:c {:foo "found!"}}}} [:a :b :c :foo])
+; "found!"
+; tjoc=> (doc get-in)
+; -------------------------
+; clojure.core/get-in
+; ([m ks] [m ks not-found])
+;   Returns the value in a nested associative structure,
+;   where ks is a sequence of ke(ys. Returns nil if the key is not present,
+;   or the not-found value if supplied.
+; nil
+; tjoc=> (doc sorted-set)
+; -------------------------
+; clojure.core/sorted-set
+; ([& keys])
+;   Returns a new sorted set with supplied keys.
+; nil
+; tjoc=> (sorted-set [0 2] [4 2] [10 3] [4 3] [9 0])
+; #{[0 2] [4 2] [4 3] [9 0] [10 3]}
+; tjoc=> (doc disj)
+; -------------------------
+; clojure.core/disj
+; ([set] [set key] [set key & ks])
+;  disj[oin]. Returns a new set of the same (hashed/sorted) type, that
+;  does not contain key(s).
+; nil
+; tjoc=> (doc keep)
+; -------------------------
+; clojure.core/keep
+; ([f coll])
+;  Returns a lazy sequence of the non-nil results of (f item). Note,
+;  this means false return values will be included.  f must be free of
+;  side-effects.
+; nil
+; tjoc=> (doc assoc)
+; -------------------------
+; clojure.core/assoc
+; ([map key val] [map key val & kvs])
+;   assoc[iate]. When applied to a map, returns a new map of the
+;     same (hashed/sorted) type, that contains the mapping of key(s) to
+;     val(s). When applied to a vector, returns a new vector that
+;    contains val at index. Note - index must be <= (count vector).
+; nil
+; tjoc=> (doc into)
+; -------------------------
+; clojure.core/into
+; ([to from])
+;   Returns a new coll consisting of to-coll with all of the items of
+;   from-coll conjoined.
+; nil
 
 ; ---
