@@ -2,26 +2,10 @@
   (:require [clj-http.client :as client])
   (:require [clj-time.core :as ctime]))
 
-(client/get "http://site.com/resources/3" {:accept :json})
+(def api-key (apply str (drop-last (slurp "/home/eddie/Downloads/api-key"))))
+(def mongolab (str "https://api.mongolab.com/api/1/databases/bookmarks/collections/library?apiKey=" api-key))
 
-;; Various options:
-(client/post "http://site.com/api"
-  {:basic-auth ["user" "pass"]
-   :body "{\"json\": \"input\"}"
-   :headers {"X-Api-Version" "2"}
-   :content-type :json
-   :socket-timeout 1000
-   :conn-timeout 1000
-   :accept :json})
-
-; https://api.mongolab.com/api/1/databases/bookmarks/collections/library?apiKey=****
-
-; user=> (client/get "https://api.mongolab.com/api/1/databases/bookmarks/collections/library?apiKey=****" {:accept :json})
-
-{:trace-redirects ["https://api.mongolab.com/api/1/databases/bookmarks/collections/library?apiKey=****"], :request-time 1455, :status 200, :headers {"date" "Tue, 18 Sep 2012 20:03:12 GMT", "server" "Apache/2.2.22 (Ubuntu)", "access-control-allow-credentials" "true", "access-control-allow-origin" "*", "content-length" "124", "connection" "close", "content-type" "application/json;charset=utf-8"}, :body "[ { \"_id\" : { \"$oid\" : \"4feab94ee4b0c93c85e20a5c\"} , \"name\" : \"zero\" , \"title\" : \"zeroTitle\" , \"dateAdded\" : \"2012/06/27\"} ]"}
-; user=> 
-
-(client/post "https://api.mongolab.com/api/1/databases/bookmarks/collections/library?apiKey=****"
+(if (= 200 (get (client/post mongolab
   {:body (str 
   " {
   \"chapter\": \"7\",
@@ -35,7 +19,14 @@
    :content-type :json
    :socket-timeout 1000
    :conn-timeout 1000
-   :accept :json})
+   :accept :json}) :status)) :posted :error)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; user=> (client/get "https://api.mongolab.com/api/1/databases/bookmarks/collections/library?apiKey=****" {:accept :json})
+
+;{:trace-redirects ["https://api.mongolab.com/api/1/databases/bookmarks/collections/library?apiKey=****"], :request-time 1455, :status 200, :headers {"date" "Tue, 18 Sep 2012 20:03:12 GMT", "server" "Apache/2.2.22 (Ubuntu)", "access-control-allow-credentials" "true", "access-control-allow-origin" "*", "content-length" "124", "connection" "close", "content-type" "application/json;charset=utf-8"}, :body "[ { \"_id\" : { \"$oid\" : \"****\"} , \"name\" : \"zero\" , \"title\" : \"zeroTitle\" , \"dateAdded\" : \"2012/06/27\"} ]"}
+; user=> 
 
 #_(
 /databases
