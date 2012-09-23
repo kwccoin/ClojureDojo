@@ -13,68 +13,68 @@
 (double (reduce + (take 1000 (map / tri-nums))))
 
 #_(
-user=> (doc nth)
--------------------------
-clojure.core/nth
-([coll index] [coll index not-found])
-  Returns the value at the index. get returns nil if index out of
-  bounds, nth throws an exception unless not-found is supplied.  nth
-  also works for strings, Java arrays, regex Matchers and Lists, and,
-  in O(n) time, for sequences.
-nil
-user=> (doc map)
--------------------------
-clojure.core/map
-([f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])
-  Returns a lazy sequence consisting of the result of applying f to the
-  set of first items of each coll, followed by applying f to the set
-  of second items in each coll, until any one of the colls is
-  exhausted.  Any remaining items in other colls are ignored. Function
-  f should accept number-of-colls arguments.
-nil
-user=> (doc reduce)
--------------------------
-clojure.core/reduce
-([f coll] [f val coll])
-  f should be a function of 2 arguments. If val is not supplied,
-  returns the result of applying f to the first 2 items in coll, then
-  applying f to that result and the 3rd item, etc. If coll contains no
-  items, f must accept no arguments as well, and reduce returns the
-  result of calling f with no arguments.  If coll has only 1 item, it
-  is returned and f is not called.  If val is supplied, returns the
-  result of applying f to val and the first item in coll, then
-  applying f to that result and the 2nd item, etc. If coll contains no
-  items, returns val and f is not called.
-nil
-user=> (doc filter)
--------------------------
-clojure.core/filter
-([pred coll])
-  Returns a lazy sequence of the items in coll for which
-  (pred item) returns true. pred must be free of side-effects.
-nil
-user=> (doc drop-while)
--------------------------
-clojure.core/drop-while
-([pred coll])
-  Returns a lazy sequence of the items in coll starting from the first
-  item for which (pred item) returns nil.
-user=> (doc delay)
--------------------------
-clojure.core/delay
-([& body])
-Macro
-  Takes a body of expressions and yields a Delay object that will
-  invoke the body only the first time it is forced (with force or deref/@), and
-  will cache the result and return it on all subsequent force
-  calls.
-nil
-user=> (doc force)
--------------------------
-clojure.core/force
-([x])
-  If x is a Delay, returns the (possibly cached) value of its expression, else returns x
-nil
+; user=> (doc nth)
+; -------------------------
+; clojure.core/nth
+; ([coll index] [coll index not-found])
+;   Returns the value at the index. get returns nil if index out of
+;   bounds, nth throws an exception unless not-found is supplied.  nth
+;   also works for strings, Java arrays, regex Matchers and Lists, and,
+;   in O(n) time, for sequences.
+; nil
+; user=> (doc map)
+; -------------------------
+; clojure.core/map
+; ([f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])
+;   Returns a lazy sequence consisting of the result of applying f to the
+;   set of first items of each coll, followed by applying f to the set
+;   of second items in each coll, until any one of the colls is
+;   exhausted.  Any remaining items in other colls are ignored. Function
+;   f should accept number-of-colls arguments.
+; nil
+; user=> (doc reduce)
+; -------------------------
+; clojure.core/reduce
+; ([f coll] [f val coll])
+;   f should be a function of 2 arguments. If val is not supplied,
+;  returns the result of applying f to the first 2 items in coll, then
+;  applying f to that result and the 3rd item, etc. If coll contains no
+;  items, f must accept no arguments as well, and reduce returns the
+;  result of calling f with no arguments.  If coll has only 1 item, it
+;  is returned and f is not called.  If val is supplied, returns the
+;  result of applying f to val and the first item in coll, then
+;  applying f to that result and the 2nd item, etc. If coll contains no
+;   items, returns val and f is not called.
+; nil
+; user=> (doc filter)
+; -------------------------
+; clojure.core/filter
+; ([pred coll])
+;   Returns a lazy sequence of the items in coll for which
+;   (pred item) returns true. pred must be free of side-effects.
+; nil
+; user=> (doc drop-while)
+; -------------------------
+; clojure.core/drop-while
+; ([pred coll])
+;  Returns a lazy sequence of the items in coll starting from the first
+;   item for which (pred item) returns nil.
+; user=> (doc delay)
+; -------------------------
+; clojure.core/delay
+; ([& body])
+; Macro
+;  Takes a body of expressions and yields a Delay object that will
+;  invoke the body only the first time it is forced (with force or deref/@), and
+;   will cache the result and return it on all subsequent force
+;  calls.
+; nil
+; user=> (doc force)
+; -------------------------
+; clojure.core/force
+; ([x])
+;   If x is a Delay, returns the (possibly cached) value of its expression, else returns x
+; nil
 )
 
 ;6.3.5 - call-by-need semantics
@@ -445,6 +445,54 @@ after trampoline returns.)
 ;   from-coll conjoined.
 ; nil
 
+; 8.1.1 - Macros
+; An implementation of eval taking a local centext
+(defn contextual-eval [ctx expr]
+  (eval
+   `(let [~@(mapcat (fn [[k v]] [k `'~v]) ctx)]
+      ~expr)))
+(contextual-eval {'a 1, 'b 2} '(+ a b))
+;tjof=> 3
+
+; (quote form)
+; Yields the unevaluated form.
+
+(def x '(* 3 5))
+(def y (* 3 5)) 
+x
+; tjoc=> (* 3 5) 
+y
+; tjoc=> 15
+; ---------------------------
+(def x '(* 3 5))
+; #'tjoc/x
+x
+; (* 3 5)
+'x
+; x
+`x
+; tjoc/x
+`~x
+; (* 3 5)
+(eval x)
+; 15
+;-----------------------------
+(list 'println x (eval x) y) 
+; tjoc=> (println (* 3 5) 15 15) 
+(list `println x (eval x) y) 
+; tjoc=> (clojure.core/println (* 3 5) 15 15)
+`(list println x (eval x) y) 
+; tjoc=> (clojure.core/list clojure.core/println tjoc/x (clojure.core/eval tjoc/x) tjoc/y)
+`(println x (eval x) y) 
+; tjoc=> (clojure.core/println tjoc/x (clojure.core/eval tjoc/x) tjoc/y)
+`(println ~x (eval x) y)
+; tjoc=> (clojure.core/println (* 3 5) (clojure.core/eval tjoc/x) tjoc/y)
+`(println ~x ~(eval x) y)
+; tjoc=> (clojure.core/println (* 3 5) 15 tjoc/y)
+`(println ~x ~(eval x) ~y)
+; (clojure.core/println (* 3 5) 15 15)
+`(println ~x ~(eval x) ~y ~@x)
+(clojure.core/println (* 3 5) 15 15 * 3 5)
 
 
 ; ---
