@@ -347,6 +347,25 @@ after trampoline returns.)
   )
 )
 
+(astar [0 0] 900 world)
+; tjcl=> [{
+;   :cost 17,
+;   :yxs [[0 0] [0 1] [0 2] [0 3] [0 4] [1 4] [2 4]
+;       [2 3] [2 2] [2 1] [2 0] [3 0] [4 0] [4 1]
+;       [4 2] [4 3] [4 4]]}
+;   :steps 94]
+
+; Clojure favors an approach where immutable data is transformed
+; through the application of functions.
+; Additionally, Clojure prefers that functions be free of side-effects
+; and referentially transparent (pure) in order to reduce the
+; complexities inherent in widespread data mutation.
+; Lexical closures provide a simple yet powerful mechanism for defining
+; functions that cassy around with them the value context in which they
+; were created.
+; Clojure primary form of iteration is through tail recursion as natural
+; result of its focus on immutability.
+
 ; tjoc=> (doc peek)
 ; -------------------------
 ; clojure.core/peek
@@ -425,5 +444,7 @@ after trampoline returns.)
 ;   Returns a new coll consisting of to-coll with all of the items of
 ;   from-coll conjoined.
 ; nil
+
+
 
 ; ---
