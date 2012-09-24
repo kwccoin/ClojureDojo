@@ -454,36 +454,57 @@ after trampoline returns.)
 (contextual-eval {'a 1, 'b 2} '(+ a b))
 ;tjof=> 3
 
+; Quote (')
+;
 ; (quote form)
 ; Yields the unevaluated form.
+; 
+; user=> '(a b c)
+; (a b c)
+; 
+; Syntax-quote (`, note, the "backquote" character), Unquote (~) and
+; Unquote-splicing (~@)
+; 
+; The syntax-quote (`, the backquote character).
+; For Symbols.
+; It resolves the Symbol in the current context, yielding a
+; fully-qualified symbol.
+; For List/Vectors/Set/Maps.
+; It establishes a template of the corresponding data structure. Within
+; the template, unqualified forms behave as if recursively
+; syntax-quoted, but forms can be exempted from such recursive quoting
+; by qualifying them with unquote or unquote-splicing, in which case the
+; will be treated as expressions and be replaced in the template by
+; their value, or sequence of values, respectively.
+; 
+; For example:
 
-(def x '(* 3 5))
-(def y (* 3 5)) 
-x
-; tjoc=> (* 3 5) 
-y
-; tjoc=> 15
+(def x 5)
+(def lst '(a b c))
+`(fred x ~x lst ~@lst 7 8 :nine)
+;=> (user/fred user/x 5 user/lst a b c 7 8 :nine)
+
 ; ---------------------------
-(def x '(* 3 5))
-; #'tjoc/x
-x
-; (* 3 5)
-'x
-; x
-`x
-; tjoc/x
-`~x
-; (* 3 5)
-(eval x)
-; 15
+(let [x 3, y '(- x)]
+  (println `y)
+  (println ``y)
+  (println ``~y)
+  (println ``~~ y)
+  (contextual-eval {'x 42} ``~~y))
+; user/y
+; (quote user/y)
+; user/y
+; (- x)
+; 42
 ;-----------------------------
-(list 'println x (eval x) y) 
-; tjoc=> (println (* 3 5) 15 15) 
-(list `println x (eval x) y) 
+(list 'println x (eval x) y)
+; tjoc=> (println (* 3 5) 15 15)
+(list `println x (eval x) y)
 ; tjoc=> (clojure.core/println (* 3 5) 15 15)
-`(list println x (eval x) y) 
-; tjoc=> (clojure.core/list clojure.core/println tjoc/x (clojure.core/eval tjoc/x) tjoc/y)
-`(println x (eval x) y) 
+`(list println x (eval x) y)
+; tjoc=> (clojure.core/list clojure.core/println tjoc/x
+; (clojure.core/eval tjoc/x) tjoc/y)
+`(println x (eval x) y)
 ; tjoc=> (clojure.core/println tjoc/x (clojure.core/eval tjoc/x) tjoc/y)
 `(println ~x (eval x) y)
 ; tjoc=> (clojure.core/println (* 3 5) (clojure.core/eval tjoc/x) tjoc/y)
@@ -492,7 +513,48 @@ x
 `(println ~x ~(eval x) ~y)
 ; (clojure.core/println (* 3 5) 15 15)
 `(println ~x ~(eval x) ~y ~@x)
-(clojure.core/println (* 3 5) 15 15 * 3 5)
+; (clojure.core/println (* 3 5) 15 15 * 3 5)
+;-----------------------------
+
+; 8.2.1 - Defining control structures without syntax-quote.
+; Because the arguments to defmacro aren't evaluated before
+; being passed to the macro, they can be viewd as pure data
+; structures, and manipulated and analyzed as such.
+
+(defmacro do-until [& clauses]
+  (when clauses
+    (list `when (first clauses)
+      (if (next clauses)
+        (second clauses)
+        (throw (IllegalArgumentException.
+          "do-until requires an even number of forms")))
+      (cons 'do-until (nnext clauses)))))
+
+; Listing 8.2 - A Clojure implementation of unless
+; syntax-quote:   `
+; unquote:        ~
+; unquote-splice  ~@
+(defmacro unless [condition & body]
+  `(if (not ~condition) ; unquote condition
+    (do ~@body)))       ; splice body
+(defn from-end [s n]
+  (let [delta (dec (- (count s) n))]
+    (unless (neg? delta)
+      (nth s delta))))
+(from-end (range 1 101) 10)
+;=> 90
+
+; Syntax-quote allows the if form to act as a temple for the expression
+; than any use of the macro becomes when expanded.
+; The unquote and splicing-unquote provide the "blanks" where the
+; values for the parameters condition and body will be inserted.
+; The unquote for condition is imperative. If we didn;t use
+; unquote in this instance, the instead of evaluating a function
+; (even? 3), it would instead attemp to resolve a namespace Var
+; named condition, if exists.
+; 
+; Side note: (defmacro unless [& args] `(when-not ~@args))
+
 
 
 ; ---
