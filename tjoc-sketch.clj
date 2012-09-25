@@ -531,12 +531,13 @@ after trampoline returns.)
       (cons 'do-until (nnext clauses)))))
 
 ; Listing 8.2 - A Clojure implementation of unless
-; syntax-quote:   `
-; unquote:        ~
-; unquote-splice  ~@
+; syntax-quote: (`)
+; unquote: (~)
+; unquote-splice (~@)
+
 (defmacro unless [condition & body]
   `(if (not ~condition) ; unquote condition
-    (do ~@body)))       ; splice body
+    (do ~@body))) ; splice body
 (defn from-end [s n]
   (let [delta (dec (- (count s) n))]
     (unless (neg? delta)
@@ -544,17 +545,71 @@ after trampoline returns.)
 (from-end (range 1 101) 10)
 ;=> 90
 
-; Syntax-quote allows the if form to act as a temple for the expression
-; than any use of the macro becomes when expanded.
+; Syntax-quote allows the if form to act as a template for
+; the expression that any use of the macro becomes when expanded.
 ; The unquote and splicing-unquote provide the "blanks" where the
 ; values for the parameters condition and body will be inserted.
 ; The unquote for condition is imperative. If we didn;t use
 ; unquote in this instance, the instead of evaluating a function
 ; (even? 3), it would instead attemp to resolve a namespace Var
 ; named condition, if exists.
-; 
+;
 ; Side note: (defmacro unless [& args] `(when-not ~@args))
 
+; Note:
+; - do-until: the template starts from the where form and it's correct
+; to search variables named clause because that will exists when the
+; macro will be expanded but aren't necessary now, during the
+; definition.
+; We just want to setup the recursion, not to call it, so 'do-until
+; yeild a form that must remain unevaluated.
+; - unless: the template starts from the if form and we want to
+; evaluate the condition, thus is unquoted.
+
+(ns macro-sketch 
+(:require [clj-time.core :as ctime]))
+(defmacro sketch-macro [foo bar]
+  `(do 
+      (println (ctime/now))
+      (println "waiting..." ) 
+      (if ; the template starts here...
+        (and ~foo ~bar)
+        (let [seed# (rand)]
+          (println (ctime/now))
+          {:seed seed#})
+        (:not-and))))
+
+(defn sketch-fn [foo bar]
+  (do 
+    (println (ctime/now))
+    (println "waiting..." ) 
+    (if ; the template starts here...
+      (and foo bar)
+        (let [seed# (rand)]
+          (println (ctime/now))
+          {:seed seed#})
+        (:not-and))))
+; function's arguments are evaluated
+; before the function is called.
+; With this macro, we see immediatly the waiting print...
+(sketch-macro (= 1 1) (do (Thread/sleep 3000) true))
+; Instead, with a simple function, the first argument
+; is evaluated before the function call...
+; so we are forced to wait 3 seconds before see the
+; waiting print.
+(sketch-fn (= 1 1) (do (Thread/sleep 3000) true))
+;
+; macro-sketch=> (sketch-macro (= 1 1) (do (Thread/sleep 3000) true))
+; #<DateTime 2012-09-25T20:06:54.060Z>
+; waiting...
+; #<DateTime 2012-09-25T20:06:57.066Z>
+; {:seed 0.8320156852880689}
+;
+; macro-sketch=> (sketch-fn (= 1 1) (do (Thread/sleep 3000) true))
+; #<DateTime 2012-09-25T20:07:08.460Z>
+; waiting...
+; #<DateTime 2012-09-25T20:07:08.460Z>
+; {:seed 0.826365358151938}
 
 
 ; ---
