@@ -561,4 +561,29 @@ YAML Parsers
 
     clj-yaml
 
+--------
 
+SICP
+Structure and Interpretation of Computer Programs (SICP) is a textbook published in 1984 about general computer programming concepts from MIT Press written by Massachusetts Institute of Technology (MIT) professors Harold Abelson and Gerald Jay Sussman, with Julie Sussman. It was formerly used as the textbook of MIT introductory programming class and at other schools.
+http://sicpebook.wordpress.com/
+
+http://clojuredocs.org/' ClojureDocs
+http://groups.google.com/group/clojure' Clojure Google Group
+http://en.wikibooks.org/wiki/Clojure_Programming' Clojure WikiBooks
+http://planet.clojure.in' Planet Clojure
+http://clojurls.com/' Clojurls
+http://try-clojure.org/' Try Clojure
+http://learn-clojure.com/' Learn Clojure
+http://www.infoq.com/presentations/Value-Identity-State-Rich-Hickey' InfoQ - Persistent Data Structures and Managed References
+http://clojure.com/blog/' Clojure/Core Blog
+http://thinkrelevance.com/blog/tags/clojure.html' Think Relevance Blog
+http://blog.fogus.me/?s=clojure' Fogus Blog (Clojure Search)
+http://disclojure.org/' Disclojure Blog
+http://data-sorcery.org/' Data Sorcery with Incanter
+http://bc.tech.coop/blog/index.html' Clementson's Blog
+http://briancarper.net/tag/157/clojure' Brian Carper's Blog
+http://clojurewise.blogspot.com/' ClojureWise Blog
+http://pragprog.com/titles/shcloj/programming-clojure' Programming Clojure
+http://www.amazon.com/dp/1935182641' The Joy of Clojure
+http://www.amazon.com/dp/1935182595' Clojure in Action
+http://www.amazon.com/dp/1430272317' Practical Clojure

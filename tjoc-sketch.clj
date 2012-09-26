@@ -611,5 +611,113 @@ after trampoline returns.)
 ; #<DateTime 2012-09-25T20:07:08.460Z>
 ; {:seed 0.826365358151938}
 
+;user=> (doc keep-indexed)
+;-------------------------
+;clojure.core/keep-indexed
+;([f coll])
+;  Returns a lazy sequence of the non-nil results of (f index item). Note,
+;  this means false return values will be included.  f must be free of
+;  side-effects.
+;nil
+;user=> (doc add-watch)
+;-------------------------
+;clojure.core/add-watch
+;([reference key fn])
+;  Alpha - subject to change.
+;  Adds a watch function to an agent/atom/var/ref reference. The watch
+;  fn must be a fn of 4 args: a key, the reference, its old-state, its
+;  new-state. Whenever the reference's state might have been changed,
+;  any registered watches will have their functions called. The watch fn
+;  will be called synchronously, on the agent's thread if an agent,
+;  before any pending sends if agent or ref. Note that an atom's or
+;  ref's state may have changed again prior to the fn call, so use
+;  old/new-state rather than derefing the reference. Note also that watch
+;  fns may be called from multiple threads simultaneously. Var watchers
+;  are triggered only by root binding changes, not thread-local
+;  set!s. Keys must be unique per reference, and can be used to remove
+;  the watch with remove-watch, but are otherwise considered opaque by
+;  the watch mechanism.
+;nil
+
+(defmacro def-watched [name & value]
+  `(do
+     (def ~name ~@value)
+     (add-watch (var ~name)
+                :re-bind
+                (fn [~'key ~'r old# new#]
+                  (println old# " -> " new#)))))
+
+(def-watched x (* 12 12))
+x
+;=> 144
+(def x 0)
+;=> 144 -> 0
+
+;user=> (doc declare)
+;-------------------------
+;clojure.core/declare
+;([& names])
+;Macro
+;  defs the supplied var names with no bindings, useful for making forward declarations.
+
+; Listing 8.4 - Domain DSL's underlying form
+{:tag <node form>,
+ :attrs {},
+ :content [<nodes>]}
+(defmacro domain [name & body]
+  `{:tag :domain,
+    :attrs {:name (str '~name)},
+    :content [~@body]})
+(declare handle-things)
+(defmacro grouping [name & body]
+  `{:tag :grouping,
+    :attrs {:name (str '~name)},
+    :content [~@(handle-things body)]})
+(declare grok-attrs grok-props)
+(defn handle-things [things]
+  (for [t things]
+    {:tag :thing,
+     :attrs (grok-attrs (take-while (comp not vector?) t))
+     :content (if-let [c (grok-props (drop-while (comp not vector?) t))]
+                [c]
+                [])}))
+(defn grok-attrs [attrs]
+  (into {:name (str (first attrs))}
+        (for [a (rest attrs)]
+          (cond
+            (list? a) [:isa (str (second a))]
+            (string? a) [:comment a]))))
+(defn grok-props [props]
+  (when props
+    {:tag :properties, :attrs nil,
+     :content (apply vector (for [p props]
+                 {:tag :property,
+                  :attrs {:name (str (first p))},
+                  :content nil}))}))
+(def d
+  (domain man-vs-monster
+    (grouping people  ;  Group of people
+      (Human "A stock human")
+      (Man (isa Human)
+         "A man, baby"
+         [name]
+         [has-beard?]))
+    (grouping monsters ;  Group of monsters
+      (Chupacabra      ;  One kind of monster
+         "A fierce, yet elusive creature"
+         [eats-goats?]))))
+(:tag d)
+;=> :domain
+(:tag (first (:content d)))
+;=> :grouping
+
+(use '[clojure.xml :as xml])
+(xml/emit d)
+
+; 8.5 - Using macro to control symbolic resolution time
+(defmacro resolution [] `x)
+(macroexpand '(resolution))
+;=> user/x
+
 
 ; ---
