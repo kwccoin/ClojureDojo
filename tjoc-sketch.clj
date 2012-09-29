@@ -715,9 +715,20 @@ x
 (xml/emit d)
 
 ; 8.5 - Using macro to control symbolic resolution time
+; Whereas functions accept and return values that are meaningful to your application at runtime, macros accept and return code forms that are meaningful at compile time.
 (defmacro resolution [] `x)
 (macroexpand '(resolution))
 ;=> user/x
+(def x 9)
+(let [x 0] (resolution))
+;=> 9
+
+; `symbol:  is the syntax-quote that attemo to resolve symbols in the current context.
+; ~'symbol: avoid that resolution by unquoting a quote.
+; This is a bit of awkwarness.
+
+
+
 
 
 ; ---
