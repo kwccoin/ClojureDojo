@@ -8,11 +8,11 @@
 (if (= 200 (get (client/post mongolab
   {:body (str 
   " {
-  \"chapter\": \"8\",
-  \"title\": \"Macros\",
-  \"paragraph\": \"8.5.1\",
-  \"book-page\": \"170\",
-  \"doc-page\": \"197\",
+  \"chapter\": \"9\",
+  \"title\": \"Exploring Clojure multimethods with the Universal Design Pattern\",
+  \"paragraph\": \"9.2\",
+  \"book-page\": \"183\",
+  \"doc-page\": \"210\",
   \"date-added\": \""(ctime/now)\"" 
   } ")
    :headers {"X-Api-Version" "2"}

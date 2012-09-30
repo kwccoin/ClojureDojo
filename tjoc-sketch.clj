@@ -715,7 +715,9 @@ x
 (xml/emit d)
 
 ; 8.5 - Using macro to control symbolic resolution time
-; Whereas functions accept and return values that are meaningful to your application at runtime, macros accept and return code forms that are meaningful at compile time.
+; Whereas functions accept and return values that are meaningful
+; to your application at runtime, macros accept and return code
+; forms that are meaningful at compile time.
 (defmacro resolution [] `x)
 (macroexpand '(resolution))
 ;=> user/x
@@ -723,7 +725,8 @@ x
 (let [x 0] (resolution))
 ;=> 9
 
-; `symbol:  is the syntax-quote that attemo to resolve symbols in the current context.
+; `symbol:  is the syntax-quote that attemo to resolve symbols
+; in the current context.
 ; ~'symbol: avoid that resolution by unquoting a quote.
 ; This is a bit of awkwarness.
 
@@ -739,7 +742,8 @@ x
     #(.close %)
     (.readLine page)))
 
-; ... the use of named bindings marked by vectors is ubiquitous and idiomatic in Clojure
+; ... the use of named bindings marked by vectors is ubiquitous
+; and idiomatic in Clojure
 
 ; Macros returnin functions
 ; the "contract" macro.
@@ -757,7 +761,9 @@ x
 (declare collect-bodies)
 (defmacro contract [name & forms]
   (list* `fn name (collect-bodies forms)))
-; In order to follow the multi-arity function definition form so that the contract can take more tha one specification per arity function, each separated by a vector of symbols:
+; In order to follow the multi-arity function definition form
+; so that the contract can take more tha one specification per
+; arity function, each separated by a vector of symbols:
 ; (partition represent: arglist, requires and ensures of contract)
 (declare build-contract)
 (defn collect-bodies [forms]
@@ -777,6 +783,106 @@ x
               (assoc {} :post (vec (rest con)))
             :else (throw (Exception. (str "Unknown tag " (first con)))))))
        (list* 'f args))))
+; 8.12 - Composition of contract function and constrained function
+(def doubler-contract
+  (contract doubler [x]
+    (:require 
+      (positive? x))
+    (:ensure
+      (= (* 2 x) %))))
+(def times2 (partial doubler-contract #(* 2 %)))
+(times2 9)
+(def times3 (partial doubler-contract #(* 3 %)))
+(times3 9)
+
+;8.13 - Contract for multiple-arity functions
+(def doubler-contract
+  (contract doubler 
+    [x]
+      (:require 
+        (positive? x))
+      (:ensure
+        (= (* 2 x) %)
+    [x y]
+      (:require 
+        (positive? x))
+        (positive? y))
+      (:ensure
+        (= (* 2 (+ x y)) %))))
+; By using the contract macro, we've provided a way to describe 
+; the expectations of a function, including but not limite to:
+; - the possible type of its inputs and output
+; - the relationship of the function output to its inputs
+; - the expected function arities
+; - the "shape" of the inputs and output.
+
+; 9.1 - Namespace navigation
+; namespace creation: ns, in-ns, create-ns
+
+;user=> (doc ns)
+;-------------------------
+;clojure.core/ns
+;([name docstring? attr-map? references*])
+;Macro
+;  Sets *ns* to the namespace named by name (unevaluated), creating it
+;  if needed.  references can be zero or more of: (:refer-clojure ...)
+;  (:require ...) (:use ...) (:import ...) (:load ...) (:gen-class)
+;  with the syntax of refer-clojure/require/use/import/load/gen-class
+;  respectively, except the arguments are unevaluated and need not be
+;  quoted. (:gen-class ...), when supplied, defaults to :name
+;  corresponding to the ns name, :main true, :impl-ns same as ns, and
+;  :init-impl-ns true. All options of gen-class are
+;  supported. The :gen-class directive is ignored when not
+;  compiling. If :gen-class is not supplied, when compiled only an
+;  nsname__init.class will be generated. If :refer-clojure is not used, a
+;  default (refer 'clojure) is used.  Use of ns is preferred to
+;  individual calls to in-ns/require/use/import:
+;
+;  (ns foo.bar
+;    (:refer-clojure :exclude [ancestors printf])
+;    (:require (clojure.contrib sql sql.tests))
+;    (:use (my.lib this that))
+;    (:import (java.util Date Timer Random)
+;             (java.sql Connection Statement)))
+;nil
+;user=> (doc in-ns)
+;-------------------------
+;clojure.core/in-ns
+;([name])
+;  Sets *ns* to the namespace named by the symbol, creating it if needed.
+;nil
+;user=> (doc intern)
+;-------------------------
+;clojure.core/intern
+;([ns name] [ns name val])
+;  Finds or creates a var named by the symbol name in the namespace
+;  ns (which can be a symbol or a namespace), setting its root binding
+;  to val if supplied. The namespace must exist. The var will adopt any
+;  metadata from the name symbol.  Returns the var.
+;nil
+;user=> 
+
+(def f (create-ns 'foons))
+f
+;=> #<Namespace foons>
+(intern f 'reduce clojure.core/reduce)
+;=> #<'foons/reduce>
+
+; The defn- macro is provided for convenience and simply attaches
+; privileged metadata to the Var containing the function.
+; You could attach the same namescpace privacy metadata yourself:
+
+(ns hider.ns)
+(defn ^{:private true} answer [] 42)
+(ns seeker.ns
+  (:refer hider.ns))
+(answer)
+; java.lang.Exception: unable to resolve symbol: answer in this context
+
+; Fine grained controls:
+; Clojure prefers a fine-grained Var mapping via a set of directives
+; on the ns macro:
+; :exclude, :only, :as, :refer-clojure, :import, :use, :load, :require.
 
 
 ; ---
