@@ -757,6 +757,26 @@ x
 (declare collect-bodies)
 (defmacro contract [name & forms]
   (list* `fn name (collect-bodies forms)))
+; In order to follow the multi-arity function definition form so that the contract can take more tha one specification per arity function, each separated by a vector of symbols:
+; (partition represent: arglist, requires and ensures of contract)
+(declare build-contract)
+(defn collect-bodies [forms]
+  (for [form (partition 3 forms)]
+    (build-contract form)))
+; 8.11 - The contrat auxiliary function build-contract
+(defn build-contract [c]
+  (let [args (first c)]
+    (list
+      (into '[f] args)
+      (apply merge
+        (for [con (rest c)]
+          (cond 
+            (= (first con) :require)
+              (assoc {} :pre (vec (rest con)))
+            (= (first con) :ensure)
+              (assoc {} :post (vec (rest con)))
+            :else (throw (Exception. (str "Unknown tag " (first con)))))))
+       (list* 'f args))))
 
 
 ; ---
