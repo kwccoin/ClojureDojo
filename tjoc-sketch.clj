@@ -727,8 +727,36 @@ x
 ; ~'symbol: avoid that resolution by unquoting a quote.
 ; This is a bit of awkwarness.
 
+; Listing 8.9 - A more general template for with-open-like macros
+(defmacro with-resource [binding close-fn & body]
+  `(let ~ binding
+     (try
+       (do ~@body)
+       (finally
+         (~close-fn ~(binding 0))))))
+(let [stream (joc-www)]
+  (with-resource [page stream]
+    #(.close %)
+    (.readLine page)))
 
+; ... the use of named bindings marked by vectors is ubiquitous and idiomatic in Clojure
 
+; Macros returnin functions
+; the "contract" macro.
+; The template of a macro contract:
+; (contract doubler [x]
+;   (:require (positive? x))
+;   (:ensure  (= (* 2 x) %)))
+; that will return something similar to:
+(fn doubler
+  ([f x]
+    {:post [(= (* 2 x) %)]
+     :pre  [(positive x)]}
+    (f x)))
+; 8.10 - the contract top-level macro.
+(declare collect-bodies)
+(defmacro contract [name & forms]
+  (list* `fn name (collect-bodies forms)))
 
 
 ; ---
