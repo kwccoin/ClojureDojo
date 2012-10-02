@@ -157,6 +157,9 @@ https://github.com/clojurebook/ClojureProgramming
 - parser - Crawlista
 https://github.com/michaelklishin/crawlista
 
+- Clojure Koans
+https://github.com/functional-koans/clojure-koans
+
 ---
 
 - Clojars - jar repository

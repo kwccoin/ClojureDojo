@@ -749,6 +749,32 @@ user=>
 ; Solutions:
 (fn [coll n]
   (apply map list (partition n coll)))
+
+; This solution comes from the combination of two
+; function: apply and map.
+; apply because if you were to try
+;user=> (max [1 2 3])
+; [1 2 3]
+; You would get '[1 2 3]' for the result. In this case, 'max' has
+; received one vector argument, and the largest of its arguments
+; is that single vector.;; If you would like to find the largest
+; item **within** the vector, you would need to use 'apply':
+;user=> (apply max [1 2 3])
+;3
+; which is the same as (max 1 2 3)
+; And map, because map Returns a lazy sequence consisting of the result
+; of applying f to the
+; set of first items of each coll, followed by applying f to the set
+; of second items in each coll, until any one of the colls is
+; exhausted. 
+
+; Thus apply map will return a number of sublists equals to the
+; param of partition, and the sublist will be composed of
+; (/ (count coll) size):
+
+user=> (partition 5 (range 10))
+((0 1 2 3 4) (5 6 7 8 9))
+
 ; austintaylor's solution:
 (fn [s n]
   (map (fn [l] (map last l))
