@@ -861,6 +861,112 @@ user=>
        [l r] (split-at (mod % (count %2)) %2)]
     (concat r l))
 
+; #44
+; Rotate Sequence
+; 
+; Difficulty:	Medium
+; Topics:	seqs
+; 
+; Write a function which can rotate a sequence in either direction.
+; (= (__ 2 [1 2 3 4 5]) '(3 4 5 1 2))
+; (= (__ -2 [1 2 3 4 5]) '(4 5 1 2 3))
+; (= (__ 6 [1 2 3 4 5]) '(2 3 4 5 1))
+; (= (__ 1 '(:a :b :c)) '(:b :c :a))
+; (= (__ -4 '(:a :b :c)) '(:c :a :b))
+
+(defn rotate [step coll]
+  (let [[a b] (split-at (mod step (count coll)) coll)] (concat b a)))
+(rotate  2 [1 2 3 4 5])
+(rotate -2 [1 2 3 4 5])
+(rotate  6 [1 2 3 4 5])
+(rotate  1 '(:a :b :c))
+(rotate -4 '(:a :b :c))
+
+; Solutions:
+(fn rotate [step coll]
+  (let [[a b] (split-at (mod step (count coll)) coll)] (concat b a)))
+
+; austintaylor's solution:
+(fn [n s]
+  (let [[a b] (split-at (mod n (count s)) s)]
+    (concat b a)))
+
+; maximental's solution:
+(comp (partial apply concat)
+  (juxt (partial apply drop)
+     (partial apply take))
+     (juxt (comp (partial apply mod)
+       (juxt first
+         (comp count second)))
+           second)
+      list)
+(fn [n s] (#(concat (drop % s) (take % s)) (mod n (count s))))
+
+;nikelandjelo's solution:
+(fn rotate [n seq]
+  (cond (zero? n)
+    seq
+      (neg? n)
+      (recur (inc n) (concat [(last seq)] (butlast seq)))
+      (pos? n)
+      (recur (dec n) (concat (rest seq) [(first seq)]))))
+
+; norman's solution:
+(fn [n x]
+  (let [howmany (mod n (count x))]
+     (concat (drop howmany x) (take howmany x))))
+
+#_(
+user=> (doc mod)
+-------------------------
+clojure.core/mod
+([num div])
+  Modulus of num and div. Truncates toward negative infinity.
+nil
+user=> (doc concat)
+-------------------------
+clojure.core/concat
+([] [x] [x y] [x y & zs])
+  Returns a lazy seq representing the concatenation of the elements in the supplied colls.
+nil
+user=> (doc split-at)
+-------------------------
+clojure.core/split-at
+([n coll])
+  Returns a vector of [(take n coll) (drop n coll)]
+nil
+user=> 
+user=> (doc comp)
+-------------------------
+clojure.core/comp
+([f] [f g] [f g h] [f1 f2 f3 & fs])
+  Takes a set of functions and returns a fn that is the composition
+  of those fns.  The returned fn takes a variable number of args,
+  applies the rightmost of fns to the args, the next
+  fn (right-to-left) to the result, etc.
+nil
+user=> (doc cons)
+-------------------------
+clojure.core/cons
+([x seq])
+  Returns a new seq where x is the first element and seq is
+    the rest.
+nil
+user=> 
+)
+
+; #46
+; Flipping out
+; 
+; Difficulty:	Medium
+; Topics:	higher-order-functions
+; Write a higher-order function which flips the order of the arguments of an input function.
+
+(= 3 ((__ nth) 2 [1 2 3 4 5]))
+(= true ((__ >) 7 8))
+(= 4 ((__ quot) 2 8))
+(= [1 2 3] ((__ take) [1 2 3 4 5] 3))
+
 ; 50: Write a function which takes a sequence consisting of items with different
 ; types and splits them up into a set of homogeneous sub-sequences. The internal
 ; order of each sub-sequence should be maintained, but the sub-sequences
