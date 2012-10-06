@@ -1054,6 +1054,54 @@ nil
 user=> 
 )
 
+; #49
+; Split a sequence
+; 
+; Topics:	seqs core-functions
+;
+; Write a function which will split a sequence into two parts.
+;
+; (= (__ 3 [1 2 3 4 5 6]) [[1 2 3] [4 5 6]])
+; (= (__ 1 [:a :b :c :d]) [[:a] [:b :c :d]])
+; (= (__ 2 [[1 2] [3 4] [5 6]]) [[[1 2] [3 4]] [[5 6]]])
+; Special Restrictions
+; split-at
+
+; user=> (doc split-at)
+; -------------------------
+; clojure.core/split-at
+; ([n coll])
+;   Returns a vector of [(take n coll) (drop n coll)]
+; nil
+; user=> (split-at 2 [1 2 3 4 5])
+; [(1 2) (3 4 5)]
+
+; Source:
+(defn split-at
+  "Returns a vector of [(take n coll) (drop n coll)]"
+  {:added "1.0"
+   :static true}
+  [n coll]
+    [(take n coll) (drop n coll)])
+
+#_(
+user=> (doc take)
+-------------------------
+clojure.core/take
+([n coll])
+  Returns a lazy sequence of the first n items in coll, or all items if
+  there are fewer than n.
+nil
+user=> (doc drop)
+-------------------------
+clojure.core/drop
+([n coll])
+  Returns a lazy sequence of all but the first n items in coll.
+nil
+user=>
+) 
+
+
 ; 50: Write a function which takes a sequence consisting of items with different
 ; types and splits them up into a set of homogeneous sub-sequences. The internal
 ; order of each sub-sequence should be maintained, but the sub-sequences
