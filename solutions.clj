@@ -967,6 +967,93 @@ user=>
 (= 4 ((__ quot) 2 8))
 (= [1 2 3] ((__ take) [1 2 3 4 5] 3))
 
+; #46
+; Flipping out
+; 
+; Difficulty:	Medium
+; Topics:	higher-order-functions
+; Write a higher-order function which flips the order of the arguments of an input function.
+
+(= 3 ((__ nth) 2 [1 2 3 4 5]))
+(= true ((__ >) 7 8))
+(= 4 ((__ quot) 2 8))
+(= [1 2 3] ((__ take) [1 2 3 4 5] 3))
+
+(defn flip-out-for-two [func]
+  (fn [a b] (func b a)))
+(defn flip-out [func]
+  (fn [& args]
+    (apply func (reverse args))))
+
+; nikelandjelo's solution:
+#(fn [a b] (% b a))
+(fn flpout [f]
+  (fn [& args]
+    (apply f (concat (rest args) (take 1 args)))))
+
+#_(
+user=> (doc nth)
+-------------------------
+clojure.core/nth
+([coll index] [coll index not-found])
+  Returns the value at the index. get returns nil if index out of
+  bounds, nth throws an exception unless not-found is supplied.  nth
+  also works for strings, Java arrays, regex Matchers and Lists, and,
+  in O(n) time, for sequences.
+nil
+user=> (doc >)
+-------------------------
+clojure.core/>
+([x] [x y] [x y & more])
+  Returns non-nil if nums are in monotonically decreasing order,
+  otherwise false.
+nil
+user=> (doc quot)
+-------------------------
+clojure.core/quot
+([num div])
+  quot[ient] of dividing numerator by denominator.
+nil
+user=> (doc take)
+-------------------------
+clojure.core/take
+([n coll])
+  Returns a lazy sequence of the first n items in coll, or all items if
+  there are fewer than n.
+nil
+user=>
+)
+
+; #47
+; Contain Yourself
+
+; The contains? function checks if a KEY is present in a given
+; collection. This often leads beginner clojurians to use it 
+; incorrectly with numerically indexed collections 
+; like vectors and lists.
+
+
+(contains? #{4 5 6} __)
+(contains? [1 1 1 1 1] __)
+(contains? {4 :a 2 :b} __)
+(not (contains? '(1 2 4) __))
+
+; 4
+(reduce + (take 4 (repeatedly #(inc 0))))
+
+#_(
+-------------------------
+clojure.core/contains?
+([coll key])
+  Returns true if key is present in the given collection, otherwise
+  returns false.  Note that for numerically indexed collections like
+  vectors and Java arrays, this tests if the numeric key is within the
+  range of indexes. 'contains?' operates constant or logarithmic time;
+  it will not perform a linear search for a value.  See also 'some'.
+nil
+user=> 
+)
+
 ; 50: Write a function which takes a sequence consisting of items with different
 ; types and splits them up into a set of homogeneous sub-sequences. The internal
 ; order of each sub-sequence should be maintained, but the sub-sequences
