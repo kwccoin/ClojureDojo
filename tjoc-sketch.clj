@@ -879,10 +879,228 @@ f
 (answer)
 ; java.lang.Exception: unable to resolve symbol: answer in this context
 
+; Declarative inclusions and exclusions.
 ; Fine grained controls:
 ; Clojure prefers a fine-grained Var mapping via a set of directives
 ; on the ns macro:
 ; :exclude, :only, :as, :refer-clojure, :import, :use, :load, :require.
+
+; user=> (doc assoc)
+; -------------------------
+; clojure.core/assoc
+; ([map key val] [map key val & kvs])
+;   assoc[iate]. When applied to a map, returns a new map of the
+;     same (hashed/sorted) type, that contains the mapping of key(s) to
+;     val(s). When applied to a vector, returns a new vector that
+;     contains val at index. Note - index must be <= (count vector).
+; nil
+
+; 9.2 - Exploring Clojure Multimethods
+; with the Universal Design Pattern
+
+(ns joy.udp
+  (:refer-clojure :exclude [get]))
+; beget
+; Takes a map m and associates its prototype
+; reference to another map, returning a new map.
+(defn beget [m v] (assoc m ::prototype v))
+(beget {:sub 0} {:super 1})
+;=> {:joy.udp/prototype {:super 1}, :sub 0}
+; put
+(def put assoc)
+; get - implementing the prototype chain
+(defn get [m k]
+  (when m
+    (if-let [[_ v] (find m k)]
+      v
+      (recur (::prototype m) k))))
+(get (beget {:sub 0} {:super 1})
+  :super)
+;=> 1
+; remove
+; We don't need one because the not found is nit
+; and nil is simply false.
+
+(def cat {:likes-dogs true, :ocd-bathing true})
+(def morris (beget {:likes-9lives true} cat))
+(def post-traumatic-morris (beget {:likes-dogs nil} morris))
+(get cat :likes-dogs)
+;=> true
+(get morris :likes-dogs)
+;=> true
+(get post-traumatic-morris :likes-dogs)
+;=> nil
+
+; Adding behaviors to the UDP can be accomplished easly
+; using Clojure's multimethod facilities.
+; Multimethos providea way to perform function polymorphism
+; based on the result of an arbitrary dispatch function.
+
+#_(
+user=> (doc defmulti)
+-------------------------
+clojure.core/defmulti
+([name docstring? attr-map? dispatch-fn & options])
+Macro
+  Creates a new multimethod with the associated dispatch function.
+  The docstring and attribute-map are optional.
+
+  Options are key-value pairs and may be one of:
+    :default    the default dispatch value, defaults to :default
+    :hierarchy  the isa? hierarchy to use for dispatching
+                defaults to the global hierarchy
+nil
+user=> (doc defmethod)
+-------------------------
+clojure.core/defmethod
+([multifn dispatch-val & fn-tail])
+Macro
+  Creates and installs a new method of multimethod associated with dispatch-value. 
+nil
+user=>
+)
+
+; The multimethod compiler
+(defmulti  compiler :os)
+(defmethod compiler ::unix [m] (get m :c-compiler))
+(defmethod compiler ::osx  [m] (get m :c-compiler))
+; if the function compiler is called with a protytype map,
+; the the map is queried for an element :os, which has
+; methods defined on the results for either ::unix 
+; or :osx.
+(def clone (partial beget {}))
+(def unix {:os ::unix, :c-compiler "cc", 
+           :home "/home", :dev "dev"})
+(def osx (-> (clone unix)
+             (put :os ::osx)
+             (put :c-compiler "gcc")
+             (put :home "/Users")))
+(compiler unix)
+;=> "cc"
+(compiler osx)
+;=> "gcc"
+
+; 9.2.3 Ad hoc hierarchies for inherited behaviors
+
+(defmulti  home :os)
+(defmethod home ::unix [m] (get m :home))
+(home unix)
+;=> "/home"
+(home osx)
+; java.lang.IllegalArgumentException:
+;   No method in multimethod 'home' for dispatch value: :user/osx
+
+; we need a relationship stating: "::osx is a ::unix"
+(derive ::osx ::unix)
+(home osx)
+;=> "/Users"
+(parents ::osx)
+;=> #{:user/unix}
+(ancestors ::osx)
+;=> #{:user/unix}
+(descendants ::unix)
+;=> #{:user/osx}
+(isa? ::osx ::unix)
+;=> true
+(isa? ::unix ::osx)
+;=> false
+(derive ::osx ::bsd)
+(defmethod home ::bsd [m] "/home")
+(home osx)
+; java.lang.IllegalArgumentException: Multiple methods in
+; multimethod 'home' match dispatch value: :user/osx -> :user/unix
+; and :user/bsd, nad neither is preferred.
+(prefer-method home ::unix ::bsd)
+(home osx)
+;=> "/Users"
+; with prefer-method we explicitly state that for the 
+; multimethod home, we prefer the method associated
+; with the dispatch value ::unix, over the one for "bsd".
+
+(derive (make-hierarchy) ::osx ::unix)
+;=> {:parents {:user/osx #{:user/unix}},
+;     :ancestors {:user/osx #{:user/unix}},
+;     :descendants {:user/unix #{:user/osx}}}
+
+(defmulti  compile-cmd  (juxt :os compiler))
+(defmethod compile-cmd [::osx "gcc"] [m]
+  (str "/usr/bin/" (get m :c-compiler)))
+(defmethod compile-cmd :default [m]
+  (str "Unsure where to locate " (get m :c-compiler)))
+(compile-cmd osx)
+;=> "/usr/bin/gcc"
+(compile-cmd unix)
+;=> "Unsure where to locate cc"
+
+
+
+#_(
+user=> (doc parents)
+-------------------------
+clojure.core/parents
+([tag] [h tag])
+  Returns the immediate parents of tag, either via a Java type
+  inheritance relationship or a relationship established via derive. h
+  must be a hierarchy obtained from make-hierarchy, if not supplied
+  defaults to the global hierarchy
+nil
+user=> (doc ancestors)
+-------------------------
+clojure.core/ancestors
+([tag] [h tag])
+  Returns the immediate and indirect parents of tag, either via a Java type
+  inheritance relationship or a relationship established via derive. h
+  must be a hierarchy obtained from make-hierarchy, if not supplied
+  defaults to the global hierarchy
+nil
+user=> (doc descendants)
+-------------------------
+clojure.core/descendants
+([tag] [h tag])
+  Returns the immediate and indirect children of tag, through a
+  relationship established via derive. h must be a hierarchy obtained
+  from make-hierarchy, if not supplied defaults to the global
+  hierarchy. Note: does not work on Java type inheritance
+  relationships.
+nil
+user=> (doc isa?)
+-------------------------
+clojure.core/isa?
+([child parent] [h child parent])
+  Returns true if (= child parent), or child is directly or indirectly derived from
+  parent, either via a Java type inheritance relationship or a
+  relationship established via derive. h must be a hierarchy obtained
+  from make-hierarchy, if not supplied defaults to the global
+  hierarchy
+nil
+user=> (doc make-hierarchy)
+-------------------------
+clojure.core/make-hierarchy
+([])
+  Creates a hierarchy object for use with derive, isa? etc.
+nil
+user=> (doc juxt)
+-------------------------
+clojure.core/juxt
+([f] [f g] [f g h] [f g h & fs])
+  Alpha - name subject to change.
+  Takes a set of functions and returns a fn that is the juxtaposition
+  of those fns.  The returned fn takes a variable number of args, and
+  returns a vector containing the result of applying each fn to the
+  args (left-to-right).
+  ((juxt a b c) x) => [(a x) (b x) (c x)]
+nil
+)
+
+; Juxt takes a bunch of functions and composes them into
+; a function returning a vector of its argument(s)
+; applied to each given function:
+(def each-math (juxt + * - /))
+(each-math 2 3)
+;=> [5 6 -1 2/3]
+((juxt take drop) 3 (range 9))
+[(0 1 2) (3 4 5 6 7 8)]
+
 
 
 ; ---

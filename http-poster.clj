@@ -9,10 +9,10 @@
   {:body (str 
   " {
   \"chapter\": \"9\",
-  \"title\": \"Exploring Clojure multimethods with the Universal Design Pattern\",
-  \"paragraph\": \"9.2\",
-  \"book-page\": \"183\",
-  \"doc-page\": \"210\",
+  \"title\": \"Types, protocols, and records\",
+  \"paragraph\": \"9.3\",
+  \"book-page\": \"189\",
+  \"doc-page\": \"216\",
   \"date-added\": \""(ctime/now)\"" 
   } ")
    :headers {"X-Api-Version" "2"}
