@@ -1101,6 +1101,174 @@ nil
 ((juxt take drop) 3 (range 9))
 [(0 1 2) (3 4 5 6 7 8)]
 
+; 9.3 - Types, protocols, and records
 
+#_(
+user=> (doc defrecord)
+-------------------------
+clojure.core/defrecord
+([name [& fields] & opts+specs])
+Macro
+  Alpha - subject to change
+  
+  (defrecord name [fields*]  options* specs*)
+  
+  Currently there are no options.
+
+  Each spec consists of a protocol or interface name followed by zero
+  or more method bodies:
+
+  protocol-or-interface-or-Object
+  (methodName [args*] body)*
+
+  Dynamically generates compiled bytecode for class with the given
+  name, in a package with the same name as the current namespace, the
+  given fields, and, optionally, methods for protocols and/or
+  interfaces.
+
+  The class will have the (immutable) fields named by
+  fields, which can have type hints. Protocols/interfaces and methods
+  are optional. The only methods that can be supplied are those
+  declared in the protocols/interfaces.  Note that method bodies are
+  not closures, the local environment includes only the named fields,
+  and those fields can be accessed directy.
+
+  Method definitions take the form:
+
+  (methodname [args*] body)
+
+  The argument and return types can be hinted on the arg and
+  methodname symbols. If not supplied, they will be inferred, so type
+  hints should be reserved for disambiguation.
+
+  Methods should be supplied for all methods of the desired
+  protocol(s) and interface(s). You can also define overrides for
+  methods of Object. Note that a parameter must be supplied to
+  correspond to the target object ('this' in Java parlance). Thus
+  methods for interfaces will take one more argument than do the
+  interface declarations. Note also that recur calls to the method
+  head should *not* pass the target object, it will be supplied
+  automatically and can not be substituted.
+
+  In the method bodies, the (unqualified) name can be used to name the
+  class (for calls to new, instance? etc).
+
+  The class will have implementations of several (clojure.lang)
+  interfaces generated automatically: IObj (metadata support) and
+  IPersistentMap, and all of their superinterfaces.
+
+  In addition, defrecord will define type-and-value-based equality and
+  hashCode.
+
+  When AOT compiling, generates compiled bytecode for a class with the
+  given name (a symbol), prepends the current ns as the package, and
+  writes the .class file to the *compile-path* directory.
+
+  Two constructors will be defined, one taking the designated fields
+  followed by a metadata map (nil for none) and an extension field
+  map (nil for none), and one taking only the fields (using nil for
+  meta and extension fields).
+nil
+user=> (doc read-string)
+-------------------------
+clojure.core/read-string
+([s])
+  Reads one object from the string s
+nil
+user=> (doc dissoc)
+-------------------------
+clojure.core/dissoc
+([map] [map key] [map key & ks])
+  dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
+  that does not contain a mapping for key(s).
+nil
+user=> 
+)
+
+
+(defrecord TreeNode [val l r])
+(TreeNode. 5 nil nil)
+;=> #:user.TreeNode{"val 5, :l nil, :r nil}
+(defn xconj [t v]
+  (cond
+    (nil? t)       (TreeNode. v nil nil)
+    (< v (:val t)) (TreeNode. (:val t) (xconj (:l t) v) (:r t))
+    :else          (TreeNode. (:val t) (:l t) (xconj (:r t) v))))
+(defn xseq [t]
+  (when t
+    (concat (xseq (:l t)) [(:val t)] (xseq (:r t)))))
+(defn sample-tree (reduce xconj nil [3 5 2 4 6]))
+(xseq sample-tree)
+;=> (2 3 4 5 6)
+
+; 9.3.2 - Protocols
+; A protocol in CLojure is simply a set of function signatures, 
+; each with at least one parameter, that are given a collective
+; name.
+
+(defprotocol FIXO
+  (fixo-push [fixo value])
+  (fixo-pop  [fixo])
+  (fixo-peek [fixo]))
+
+
+#_(
+user=> (doc defprotocol)
+-------------------------
+clojure.core/defprotocol
+([name & opts+sigs])
+Macro
+  A protocol is a named set of named methods and their signatures:
+  (defprotocol AProtocolName
+
+    ;optional doc string
+    "A doc string for AProtocol abstraction"
+
+  ;method signatures
+    (bar [this a b] "bar docs")
+    (baz [this a] [this a b] [this a b c] "baz docs"))
+
+  No implementations are provided. Docs can be specified for the
+  protocol overall and for each method. The above yields a set of
+  polymorphic functions and a protocol object. All are
+  namespace-qualified by the ns enclosing the definition The resulting
+  functions dispatch on the type of their first argument, which is
+  required and corresponds to the implicit target object ('this' in 
+  Java parlance). defprotocol is dynamic, has no special compile-time 
+  effect, and defines no new types or classes. Implementations of 
+  the protocol methods can be provided using extend.
+
+  defprotocol will automatically generate a corresponding interface,
+  with the same name as the protocol, i.e. given a protocol:
+  my.ns/Protocol, an interface: my.ns.Protocol. The interface will
+  have methods corresponding to the protocol functions, and the
+  protocol will automatically work with instances of the interface.
+
+  Note that you should not use this interface with deftype or
+  reify, as they support the protocol directly:
+
+  (defprotocol P 
+    (foo [this]) 
+    (bar-me [this] [this y]))
+
+  (deftype Foo [a b c] 
+   P
+    (foo [this] a)
+    (bar-me [this] b)
+    (bar-me [this y] (+ c y)))
+  
+  (bar-me (Foo. 1 2 3) 42)
+  => 45
+
+  (foo 
+    (let [x 42]
+      (reify P 
+        (foo [this] 17)
+        (bar-me [this] x)
+        (bar-me [this y] x))))
+  => 17
+nil
+user=> 
+)
 
 ; ---
