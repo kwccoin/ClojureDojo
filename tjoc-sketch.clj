@@ -1202,7 +1202,7 @@ user=>
 ;=> (2 3 4 5 6)
 
 ; 9.3.2 - Protocols
-; A protocol in CLojure is simply a set of function signatures, 
+; A protocol in Clojure is simply a set of function signatures, 
 ; each with at least one parameter, that are given a collective
 ; name.
 
@@ -1211,64 +1211,125 @@ user=>
   (fixo-pop  [fixo])
   (fixo-peek [fixo]))
 
+; Here we have created just the formal definition of
+; the protocol. Protocols are implemented using
+; one of the extend forms: extend, extend-type of
+; extend-protocol.
+
+(extend-type TreeNode
+  FIXO
+  (fixo-push [node value]
+    (xconj node value)))
+(xseq (fixo-push sample-tree 5/2))
+;=> (2 5/2 3 4 5 6)
+(extend-type clojure.lang.IPersistentVector
+  FIXO
+  (fixo-push [vector value]
+    (conj vector value)))
+(fixo-push [2 3 4 5 6] 5/2)
+;=> [2 3 4 5 6 5/2]
+
+; Quote: 
+; Clojure polymorphism lives in the protocol functions,
+; not in the classes.
 
 #_(
-user=> (doc defprotocol)
--------------------------
-clojure.core/defprotocol
-([name & opts+sigs])
-Macro
-  A protocol is a named set of named methods and their signatures:
-  (defprotocol AProtocolName
-
-    ;optional doc string
-    "A doc string for AProtocol abstraction"
-
-  ;method signatures
-    (bar [this a b] "bar docs")
-    (baz [this a] [this a b] [this a b c] "baz docs"))
-
-  No implementations are provided. Docs can be specified for the
-  protocol overall and for each method. The above yields a set of
-  polymorphic functions and a protocol object. All are
-  namespace-qualified by the ns enclosing the definition The resulting
-  functions dispatch on the type of their first argument, which is
-  required and corresponds to the implicit target object ('this' in 
-  Java parlance). defprotocol is dynamic, has no special compile-time 
-  effect, and defines no new types or classes. Implementations of 
-  the protocol methods can be provided using extend.
-
-  defprotocol will automatically generate a corresponding interface,
-  with the same name as the protocol, i.e. given a protocol:
-  my.ns/Protocol, an interface: my.ns.Protocol. The interface will
-  have methods corresponding to the protocol functions, and the
-  protocol will automatically work with instances of the interface.
-
-  Note that you should not use this interface with deftype or
-  reify, as they support the protocol directly:
-
-  (defprotocol P 
-    (foo [this]) 
-    (bar-me [this] [this y]))
-
-  (deftype Foo [a b c] 
-   P
-    (foo [this] a)
-    (bar-me [this] b)
-    (bar-me [this y] (+ c y)))
-  
-  (bar-me (Foo. 1 2 3) 42)
-  => 45
-
-  (foo 
-    (let [x 42]
-      (reify P 
-        (foo [this] 17)
-        (bar-me [this] x)
-        (bar-me [this y] x))))
-  => 17
-nil
-user=> 
+; user=> (doc defprotocol)
+; -------------------------
+; clojure.core/defprotocol
+; ([name & opts+sigs])
+; Macro
+;   A protocol is a named set of named methods and their signatures:
+;   (defprotocol AProtocolName
+; 
+;     ;optional doc string
+;     "A doc string for AProtocol abstraction"
+; 
+;   ;method signatures
+;     (bar [this a b] "bar docs")
+;     (baz [this a] [this a b] [this a b c] "baz docs"))
+; 
+;   No implementations are provided. Docs can be specified for the
+;   protocol overall and for each method. The above yields a set of
+;   polymorphic functions and a protocol object. All are
+;   namespace-qualified by the ns enclosing the definition The resulting
+;   functions dispatch on the type of their first argument, which is
+;   required and corresponds to the implicit target object ('this' in 
+;   Java parlance). defprotocol is dynamic, has no special compile-time 
+;   effect, and defines no new types or classes. Implementations of 
+;   the protocol methods can be provided using extend.
+; 
+;   defprotocol will automatically generate a corresponding interface,
+;   with the same name as the protocol, i.e. given a protocol:
+;   my.ns/Protocol, an interface: my.ns.Protocol. The interface will
+;   have methods corresponding to the protocol functions, and the
+;   protocol will automatically work with instances of the interface.
+; 
+;   Note that you should not use this interface with deftype or
+;   reify, as they support the protocol directly:
+; 
+;   (defprotocol P 
+;     (foo [this]) 
+;     (bar-me [this] [this y]))
+; 
+;   (deftype Foo [a b c] 
+;    P
+;     (foo [this] a)
+;     (bar-me [this] b)
+;     (bar-me [this y] (+ c y)))
+;   
+;   (bar-me (Foo. 1 2 3) 42)
+;   => 45
+; 
+;   (foo 
+;     (let [x 42]
+;       (reify P 
+;         (foo [this] 17)
+;         (bar-me [this] x)
+;         (bar-me [this y] x))))
+;   => 17
+; nil
+; user=> 
+; user=> (doc extend)
+; -------------------------
+; clojure.core/extend
+; ([atype & proto+mmaps])
+;   Implementations of protocol methods can be provided using the extend construct:
+; 
+;   (extend AType
+;     AProtocol
+;      {:foo an-existing-fn
+;       :bar (fn [a b] ...)
+;       :baz (fn ([a]...) ([a b] ...)...)}
+;     BProtocol 
+;       {...} 
+;     ...)
+;  
+;   extend takes a type/class (or interface, see below), and one or more
+;   protocol + method map pairs. It will extend the polymorphism of the
+;   protocol's methods to call the supplied methods when an AType is
+;   provided as the first argument. 
+; 
+;   Method maps are maps of the keyword-ized method names to ordinary
+;   fns. This facilitates easy reuse of existing fns and fn maps, for
+;   code reuse/mixins without derivation or composition. You can extend
+;   an interface to a protocol. This is primarily to facilitate interop
+;   with the host (e.g. Java) but opens the door to incidental multiple
+;   inheritance of implementation since a class can inherit from more
+;   than one interface, both of which extend the protocol. It is TBD how
+;   to specify which impl to use. You can extend a protocol on nil.
+; 
+;   If you are supplying the definitions explicitly (i.e. not reusing
+;   exsting functions or mixin maps), you may find it more convenient to
+;   use the extend-type or extend-protocol macros.
+; 
+;   Note that multiple independent extend clauses can exist for the same
+;   type, not all protocols need be defined in a single extend call.
+; 
+;   See also:
+;   extends?, satisfies?, extenders
+; nil
+; user=> 
 )
 
 ; ---
