@@ -160,6 +160,10 @@ https://github.com/michaelklishin/crawlista
 - Clojure Koans
 https://github.com/functional-koans/clojure-koans
 
+- Clojure-doc.org
+http://clojure-doc.org/
+https://github.com/clojuredocs/cds
+
 ---
 
 - Clojars - jar repository
