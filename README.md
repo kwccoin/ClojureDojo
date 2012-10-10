@@ -134,7 +134,7 @@ https://clojars.org/
 - Common programming mistakes for Clojure developers to avoid - Stack Overflow
 http://stackoverflow.com/questions/2020570/common-programming-mistakes-for-clojure-developers-to-avoid
 
-- An explorer's log
+- An explorer''s log
 http://nakkaya.com/
 
 - Fractals in Clojure - Fractal Fern
@@ -163,6 +163,10 @@ https://github.com/functional-koans/clojure-koans
 - Clojure-doc.org
 http://clojure-doc.org/
 https://github.com/clojuredocs/cds
+
+- clojure.math.numeric-tower
+https://github.com/clojure/math.numeric-tower
+http://clojure.github.com/math.numeric-tower/
 
 ---
 
