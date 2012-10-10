@@ -917,42 +917,42 @@ user=>
      (concat (drop howmany x) (take howmany x))))
 
 #_(
-user=> (doc mod)
--------------------------
-clojure.core/mod
-([num div])
-  Modulus of num and div. Truncates toward negative infinity.
-nil
-user=> (doc concat)
--------------------------
-clojure.core/concat
-([] [x] [x y] [x y & zs])
-  Returns a lazy seq representing the concatenation of the elements in the supplied colls.
-nil
-user=> (doc split-at)
--------------------------
-clojure.core/split-at
-([n coll])
-  Returns a vector of [(take n coll) (drop n coll)]
-nil
-user=> 
-user=> (doc comp)
--------------------------
-clojure.core/comp
-([f] [f g] [f g h] [f1 f2 f3 & fs])
-  Takes a set of functions and returns a fn that is the composition
-  of those fns.  The returned fn takes a variable number of args,
-  applies the rightmost of fns to the args, the next
-  fn (right-to-left) to the result, etc.
-nil
-user=> (doc cons)
--------------------------
-clojure.core/cons
-([x seq])
-  Returns a new seq where x is the first element and seq is
-    the rest.
-nil
-user=> 
+; user=> (doc mod)
+; -------------------------
+; clojure.core/mod
+; ([num div])
+;   Modulus of num and div. Truncates toward negative infinity.
+; nil
+; user=> (doc concat)
+; -------------------------
+; clojure.core/concat
+; ([] [x] [x y] [x y & zs])
+;   Returns a lazy seq representing the concatenation of the elements in the supplied colls.
+; nil
+; user=> (doc split-at)
+; -------------------------
+; clojure.core/split-at
+; ([n coll])
+;   Returns a vector of [(take n coll) (drop n coll)]
+; nil
+; user=> 
+; user=> (doc comp)
+; -------------------------
+; clojure.core/comp
+; ([f] [f g] [f g h] [f1 f2 f3 & fs])
+;   Takes a set of functions and returns a fn that is the composition
+;   of those fns.  The returned fn takes a variable number of args,
+;   applies the rightmost of fns to the args, the next
+;   fn (right-to-left) to the result, etc.
+; nil
+; user=> (doc cons)
+; -------------------------
+; clojure.core/cons
+; ([x seq])
+;   Returns a new seq where x is the first element and seq is
+;     the rest.
+; nil
+; user=> 
 )
 
 ; #46
@@ -992,36 +992,36 @@ user=>
     (apply f (concat (rest args) (take 1 args)))))
 
 #_(
-user=> (doc nth)
--------------------------
-clojure.core/nth
-([coll index] [coll index not-found])
-  Returns the value at the index. get returns nil if index out of
-  bounds, nth throws an exception unless not-found is supplied.  nth
-  also works for strings, Java arrays, regex Matchers and Lists, and,
-  in O(n) time, for sequences.
-nil
-user=> (doc >)
--------------------------
-clojure.core/>
-([x] [x y] [x y & more])
-  Returns non-nil if nums are in monotonically decreasing order,
-  otherwise false.
-nil
-user=> (doc quot)
--------------------------
-clojure.core/quot
-([num div])
-  quot[ient] of dividing numerator by denominator.
-nil
-user=> (doc take)
--------------------------
-clojure.core/take
-([n coll])
-  Returns a lazy sequence of the first n items in coll, or all items if
-  there are fewer than n.
-nil
-user=>
+; user=> (doc nth)
+; -------------------------
+; clojure.core/nth
+; ([coll index] [coll index not-found])
+;   Returns the value at the index. get returns nil if index out of
+;   bounds, nth throws an exception unless not-found is supplied.  nth
+;   also works for strings, Java arrays, regex Matchers and Lists, and,
+;   in O(n) time, for sequences.
+; nil
+; user=> (doc >)
+; -------------------------
+; clojure.core/>
+; ([x] [x y] [x y & more])
+;   Returns non-nil if nums are in monotonically decreasing order,
+;   otherwise false.
+; nil
+; user=> (doc quot)
+; -------------------------
+; clojure.core/quot
+; ([num div])
+;   quot[ient] of dividing numerator by denominator.
+; nil
+; user=> (doc take)
+; -------------------------
+; clojure.core/take
+; ([n coll])
+;   Returns a lazy sequence of the first n items in coll, or all items if
+;   there are fewer than n.
+; nil
+; user=>
 )
 
 ; #47
@@ -1085,22 +1085,74 @@ user=>
     [(take n coll) (drop n coll)])
 
 #_(
-user=> (doc take)
--------------------------
-clojure.core/take
-([n coll])
-  Returns a lazy sequence of the first n items in coll, or all items if
-  there are fewer than n.
-nil
-user=> (doc drop)
--------------------------
-clojure.core/drop
-([n coll])
-  Returns a lazy sequence of all but the first n items in coll.
-nil
-user=>
+; user=> (doc take)
+; -------------------------
+; clojure.core/take
+; ([n coll])
+;   Returns a lazy sequence of the first n items in coll, or all items if
+;   there are fewer than n.
+; nil
+; user=> (doc drop)
+; -------------------------
+; clojure.core/drop
+; ([n coll])
+;   Returns a lazy sequence of all but the first n items in coll.
+; nil
+; user=>
 ) 
 
+; #50 Split by Type 
+; Topics:	seqs
+;
+; Write a function which takes a sequence consisting of items
+; with different types and splits them up into a set of
+; homogeneous sub-sequences. The internal order of each
+; sub-sequence should be maintained, but the sub-sequences
+; themselves can be returned in any order (this is
+; why 'set' is used in the test cases).
+;
+; (= (set (__ [1 :a 2 :b 3 :c])) #{[1 2 3] [:a :b :c]})
+; (= (set (__ [:a "foo"  "bar" :b])) #{[:a :b] ["foo" "bar"]})
+; (= (set (__ [[1 2] :a [3 4] 5 6 :b])) #{[[1 2] [3 4]] [:a :b] [5 6]})
+
+; Solutions:
+#(vals (group-by type %))
+; austintaylor's solution:
+(fn [s]
+  (vals (group-by type s)))
+; norman's solution:
+(fn split [n]
+  (set (vals (loop [items n tmpmap {}]
+    (if (seq items)
+      (recur (rest items)
+        (merge-with concat
+          tmpmap
+          {(type (first items)) [(first items)]}))
+      tmpmap)))))
+
+#_(
+; user=> (doc vals)
+; -------------------------
+; clojure.core/vals
+; ([map])
+;   Returns a sequence of the map's values.
+; nil
+; user=> (doc group-by)
+; -------------------------
+; clojure.core/group-by
+; ([f coll])
+;   Returns a map of the elements of coll keyed by the result of
+;   f on each element. The value at each key will be a vector of the
+;   corresponding elements, in the order they appeared in coll.
+; nil
+; user=> (doc type)
+; -------------------------
+; clojure.core/type
+; ([x])
+;   Returns the :type metadata of x, or its Class if none
+; nil
+; user=> 
+)
 
 ; 50: Write a function which takes a sequence consisting of items with different
 ; types and splits them up into a set of homogeneous sub-sequences. The internal
