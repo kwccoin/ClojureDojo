@@ -1,0 +1,629 @@
+ Clojure Cookbook: Functional Programming
+
+Practical Recursion
+Problem
+
+How can I effectively use recursion in Clojure?
+Solution
+
+Imperative programming languages provide various repetition control
+structures which allow a program to execute a chunk of code an
+arbitrary number of times. These include count-controlled loops such
+as for and condition-controlled while loops. These loops rely on
+mutable state such as a counter that is incremented or some test value
+that is updated when a certain condition is met. For this reason such
+loops are a poor fit for a functional programming language such as
+Clojure which mostly works with immutable data. Clojure does not have
+a for loop. It does have a while loop, but as we will see, such loops
+are not necessary and are usually more awkward than the alternatives.
+
+Let's examine the problem of summing the elements in a vector of
+numbers. We will have to access each element in the vector, so our
+loop will actually be a sort of hybrid for/while loop. It will
+terminate when a certain condition is met, but that condition occurs
+when a counter reaches a specific number, namely the number of
+elements in the vector:
+
+(def i)
+(def sum)
+(defn sum-vec [v]
+  (binding [i 0
+            sum 0]
+    (while (< i (count v))
+      (set! sum (+ sum (v i)))
+      (set! i (inc i)))
+    sum))
+
+In order to work with mutable variables we have to define two vars i
+and sum. Clojure will not let us modify local variables including
+parameters of a function or those created by let. Instead we have to
+create local bindings of our vars and initialize both of them to 0.
+Then we traverse the vector, accumulating the sum of all the elements.
+We assign new values to our counter i and the sum by means of the set!
+special form.
+
+Well, this function works. But it's both ugly and awkward. We could
+eliminate the need for one of vars by using the dotimes macro which
+creates its own temporary counter:
+
+(defn sum-vec [v]
+  (binding [sum 0]
+    (dotimes [i (count v)]
+      (set! sum (+ sum (v i))))
+    sum))
+
+However, we still need the var sum and must destructively modify it via set!.
+
+The more natural approach in a functional programming language is to
+use recursion. Rather than controlling iteration by updating the
+values of mutable variables, we simply bind new variables with each
+recursive call. For convenience here we define two variations of
+sum-vec. The first merely accepts a vector v as its argument and then
+immediately calls the 2-argument version with a value of zero for the
+index. The function then calls itself recursively as the index
+advances to the end of the vector:
+
+(defn sum-vec
+  ([v] (sum-vec v 0))
+  ([v i]
+     (if (== i (count v))
+       0
+       (+ (sum-vec v (inc i)) (v i)))) )
+
+Note that each recursive call becomes the first argument in a call to
+the + function which then adds the value of the currently indexed
+element to the result of the recursive call. But this addition cannot
+be computed until the recursive call is done and is able to produce a
+value. So the computer must save some information on the stack while
+it goes off to evaluate the recursive call. If the vector is long
+enough it's possible that the stack will run out of space before our
+function reaches the end of the vector. In this case Clojure will
+terminate with a StackOverflowError. Our imperative version above was
+ugly, but at least it worked!
+
+The alternative is to make a small change to our recursive sum-vec.
+The trick is to keep an ongoing sum of the elements seen so far rather
+than waiting to do any addition until the recursive calls start
+returning. We can do this by using an extra variable known as an
+accumulator. Once we reach the end of the vector the accumulator will
+contain the sum, which we simply return:
+
+(defn sum-vec [v]
+  ([v] (sum-vec v 0 0))
+  ([v i sum]
+    (if (== i (count v))
+      sum
+      (sum-vec (inc i) (+ sum (v i)))) ))
+
+The key difference here is that whenever there is a recursive call of
+sum-vec the function can simply return the value returned by the
+recursive call. The recursive value is not involved in any further
+computation, so the computer does not need to preserve any information
+on the stack while waiting for recursive calls to return. Every
+recursive call is said to occur in the tail position, i.e., the last
+expression to be evaluated. Many programming languages have compilers
+that can recognize this situation and perform an operation known as
+tail call optimization (TCO) which essentially transforms the
+recursion into something like our imperative version above.
+
+Unfortunately, Clojure is built on top of Java, and Java does not
+allow TCO due to a security concern known as stack inspection
+(although some argue that this is not a fundamental limitation A
+Tail-Recursive Machine with Stack Inspection).
+
+The good news is that Clojure provides an alternative. If we can
+express our function in a tail-recursive form it is trivial to modify
+it using Clojure's loop/recur mechanism. The loop form establishes
+local variable bindings as with let, and on each iteration recur
+rebinds those variables with new values. loop even simplifies our
+function by removing the need to pass counter and accumulator
+variables to sum-vec:
+
+(defn sum-vec [v]
+  (loop [i 0
+         sum 0]
+    (if (== i (count v))
+      sum
+      (recur (inc i) (+ sum (v i)))) ))
+
+In many cases when dealing with sequences such as vectors there are
+better solutions available. First we could use the function apply to
+cause + to process all of the array elements. The + function already
+accepts any number of arguments. We just need apply to bring things
+together.
+
+(defn sum-vec [v]
+  (apply + v))
+
+Another superior choice would be to use the reduce function. For
+further examples see the recipe Folding Sequences.
+
+(defn sum-vec [v]
+  (reduce + v))
+
+Let's walk through another example transforming a naive recursion into
+a non-stack-consuming implementation. Suppose we want to determine the
+length of a sequence. Clojure has a built-in function called count
+which will do the job, but let's try defining our own version.
+
+First of all, either a sequence is empty or not. If it's empty, then
+obviously the length is 0. If it's not empty, then it has at least one
+element. So the length is 1 plus whatever the length of the rest of
+the sequence is. We could cheat and use count to do the rest of the
+work for us:
+
+(defn length [seq]
+  (if (empty? seq)
+    0
+    (+ 1 (count (rest seq)))) )
+
+But clearly we need to recursively apply our own length function. We
+will also use the function inc as a synonym for adding 1. We wind up
+with the following function definition:
+
+(defn length [coll]
+  (if (empty? coll)
+    0
+    (inc (length (rest coll)))) )
+
+So let's check our function:
+(length '(8 9 -1 4 7)) => 5
+(length "Is this not pung?") => 17
+(length [2 4 6 8 10 12 14 16 18 20]) => 10
+
+Great. So far so good.
+(length (range 100000)) => java.lang.StackOverflowError
+
+Oh, whoops!
+
+Hmm, let's try adding an accumulator and the resulting tail-recursive version:
+
+(defn length
+  ([coll] (length coll 0))
+  ([coll result]
+     (if (empty? coll)
+       result
+       (length (rest coll) (inc result)))) )
+
+Survey says:
+(length (range 100000)) => java.lang.StackOverflowError
+
+Ok, one more try:
+
+(defn length
+  ([coll] (length coll 0))
+  ([coll result]
+     (if (empty? coll)
+       result
+       (recur (rest coll) (inc result)))) )
+
+(length (range 100000)) => 100000
+
+Ah, that's more like it. We've solved the problem, but there's a more
+idiomatic Clojure technique. We can use loop to both explicitly
+identify our tail recursion and simultaneously simplify our
+definition:
+
+(defn length [coll]
+  (loop [coll coll
+         result 0]
+     (if (empty? coll)
+       result
+       (recur (rest coll) (inc result)))) )
+
+The examples above are relatively simple in part because we were
+dealing with self-recursive functions. In other words, the only
+recursion involved a function calling itself. The situation can get
+more complicated when two or more functions mutually call each
+recursively. Here is an example of such mutual recursion.
+
+(defn inorder? [elt1 elt2]
+  (cond (number? elt1) (<= elt1 elt2)
+        (string? elt1) (neg? (compare elt1 elt2))
+        (symbol? elt1) (neg? (compare (name elt1) (name elt2)))
+        (= (class elt1) Character) (neg? (compare elt1 elt2))
+        :else (throw (IllegalArgumentException. "Unrecognized type."))))
+
+(defn merge-seqs [coll1 coll2]
+  (cond (empty? coll1) coll2
+        (empty? coll2) coll1
+        (inorder? (first coll1) (first coll2))
+        (cons (first coll1) (merge-seqs (rest coll1) coll2))
+        :else (cons (first coll2) (merge-seqs coll1 (rest coll2)))) )
+
+(declare merge-sort)
+(declare partition-seq)
+(defn partition-seq [coll coll1 coll2]
+  (cond (empty? coll) (merge-seqs (merge-sort coll1) (merge-sort coll2))
+        :else (partition-seq (rest coll) (cons (first coll) coll2) coll1)))
+
+(defn merge-sort [coll]
+  (cond (empty? coll) coll
+        (empty? (rest coll)) coll
+        :else (partition-seq coll (empty coll) (empty coll))))
+
+
+Folding Sequences (reduce)
+Problem
+
+What is the use of reduce?
+Solution
+
+Many functional programming languages support the notion of folding a
+sequence. Conceptually this is the process of inserting some binary
+infix operator f between each element:
+
+The operator f is applied repeatedly until the sequence is reduced to
+a single value.
+
+When it comes to evaluating such an expression there are two
+possibilities. Either the operator is left-associative, so that means
+, or the operator is right-associative and we get . Rewritten using
+prefix notation our choices become or .
+
+Let's consider a couple of specific examples. First, what does (2 + 9
++ 3 + 1) evaluate to? It could be either (((2 + 9) + 3) + 1) or (2 +
+(9 + (3 + 1))). In Clojure notation the choice becomes: (+ (+ (+ 2 9)
+3) 1) or (+ 2 (+ 9 (+ 3 1))). In fact, we could evaluate the
+expression either way and get the same result since addition is an
+associative operation. Both expressions evaluate to 15.
+
+The situation is different, however, if we were to try subtracting
+these values. (2 - 9 - 3 - 1) could mean either (((2 - 9) - 3) - 1) or
+(2 - (9 - (3 - 1))). In the first case we get -11. The second way
+yields -5. Of course, by convention subtraction is considered to be
+left-associative, and we take the first approach. So Clojure says:
+(- 2 9 3 1) => -11
+
+Clojure provides us with the built-in function reduce which performs a
+left fold on a given sequence. In other words, reduce treats the
+operator provided to it as left-associative. The simple form of reduce
+takes a function and a sequence as its arguments:
+(reduce + [2 9 3 1]) => 15
+(reduce - [2 9 3 1]) => -11
+
+The function reduce gives us a great deal of power in a very concise
+package. We can use it to tackle the prototypical recursive
+function—factorial:
+
+(defn factorial [n]
+  (reduce * (range 1 (inc n))))
+
+(factorial 3) => 6
+(factorial 8) => 40320
+
+The function even works for factorial of 0:
+(factorial 0) => 1
+
+But this deserves a moment's thought. Consider what happens when we
+call factorial with an argument of 0. This winds up calling (range 1
+1), which is an empty sequence:
+(range 1 1) => ()
+
+The reduce function then attempts to apply the mulitplication operator
+to this empty sequence. Fortunately, the multiplication function
+provides a sensible value if given no arguments, namely the
+multiplicative identity:
+(*) => 1
+Equivalently:
+(apply * '()) => 1
+
+And reduce does the same thing here, so factorial gives us the desired value:
+(reduce * ()) => 1
+
+(defn average [v]
+  (/ (reduce + v) (count v)))
+
+(defn dot-product [v1 v2]
+  (reduce + (map * v1 v2)))
+
+
+(dot-product [1 3 -5] [4 -2 -1]) => 3
+
+Borrowing an example from Stu Halloway's book Programming Clojure we
+can use reduce to count the number of consecutive pairs of heads
+tossed in a sequence of coin flips. Heads are represented by the
+keyword :h, and tails by the keyword :t:
+
+(defn count-heads-pairs [coll]
+  (reduce + (map (fn [flip1 flip2] (if (= :h flip1 flip2) 1 0)) coll
+(rest coll))))
+
+
+We first use map to work our way down the collection alongside the
+same collection with its first element discarded. This allows us to
+pair up consecutive elements of the collection. If two consecutive
+flips are both heads that counts as 1 occurrence, otherwise it is 0
+occurrences. Finally we use reduce to sum up these counts.
+
+(count-heads-pairs [:h :t :h :h :h :t :h :h]) => 3
+Note that a run of three heads counts as two consecutive pairs.
+
+(defn +
+  "Returns the sum of nums. (+) returns 0."
+  {:inline (fn [x y] `(. clojure.lang.Numbers (add ~x ~y)))
+   :inline-arities #{2}
+   :added "1.0"}
+  ([] 0)
+  ([x] (cast Number x))
+  ([x y] (. clojure.lang.Numbers (add x y)))
+  ([x y & more]
+     (reduce + (+ x y) more)))
+
+(defn reverse
+  "Returns a seq of the items in coll in reverse order. Not lazy."
+  {:added "1.0"}
+  [coll]
+  (reduce conj () coll))
+
+(defn max
+  "Returns the greatest of the nums."
+  {:added "1.0"}
+  ([x] x)
+  ([x y] (if (> x y) x y))
+  ([x y & more]
+     (reduce max (max x y) more)))
+
+(def char-vals (vec "012345678912345678912345678923456789"))
+(def position-weights [8 7 6 5 4 3 2 10 0 9 8 7 6 5 4 3 2])
+(def check-digits (vec "0123456789X"))
+
+(defn get-char-val [ch]
+  (Character/digit (char-vals (Character/digit ch 36)) 10))
+
+(defn compute-weighted-value [ch i]
+  (* (get-char-val ch) (position-weights i)))
+
+(defn compute-check-digit [vin-string]
+  (check-digits (rem (reduce +
+                             (map compute-weighted-value
+                                  vin-string
+                                  (range (count vin-string))))
+                     11)))
+
+
+(compute-check-digit "2B4GP45GXYR760586")
+(compute-check-digit "JHMCB7658LC056658")
+
+(defn adler-32 [s]
+  (let [base 65521
+        [low high] (reduce (fn [[a b] ch] [(+ a (int ch))
+                                           (+ b a (int ch))])
+                           [1 0]
+                           s)]
+    (+ (bit-shift-left (mod high base) 16) (mod low base))))
+
+
+(adler-32 "The quick brown fox jumps over the lazy dog.") => 1810108424
+(adler-32 "The quick brown fox jumped over the lazy dog.") => 2079395934
+
+Applicative-Order Y Combinator
+Problem
+
+Will the Y combinator lead to a more fulfilling life?
+Solution
+
+No. But it offers an interesting look at recursion.
+
+So what is the Y combinator? The Y combinator is a higher-order
+function which computes a fixed point of other functions. It is a kind
+of fixed-point combinator studied in the lambda calculus. Its
+mathematical definition is
+
+However, it's a little easier to understand implemented in Clojure:
+
+(defn Y [m]
+ ((fn [future]
+    (m (fn [arg]
+         ((future future) arg))))
+  (fn [future]
+    (m (fn [arg]
+         ((future future) arg)))) ))
+
+
+We can use the Y combinator to define anonymous recursive functions.
+
+"Why would I want to do that?", you ask yourself. Well, let me tell
+you why. Ordinarily we would define a recursive function like this:
+
+(defn factorial [n]
+ (if (zero? n)
+   1
+   (* n (factorial (dec n)))) )
+
+The function body naturally contains a reference to itself—factorial—
+in order to compute the recursive cases.
+
+But what if we wanted to apply an anonymous recursive function
+directly to an argument:
+((fn [n] (if (zero? n) 1 (* n (?? (dec n))))) 6)
+
+What do we put where the ?? is? This function has no name, so how can
+it call itself?
+
+That's where the Y combinator comes in. Using the function Y above,
+the problem disappears:
+
+((Y (fn [rec]
+     (fn [n]
+       (if (zero? n)
+         1
+         (* n (rec (dec n)))) ))) 6)
+=> 720
+
+What could be simpler than that? (I'm sure you can think of lots of things.)
+
+Here are a few more familiar examples.
+
+Fibonacci numbers? No problem:
+
+((Y (fn [rec]
+     (fn [n]
+       (cond (= n 0) 0
+             (= n 1) 1
+             :else (+ (rec (- n 1)) (rec (- n 2)))) ))) 10)
+=> 55
+
+Find the length of a list:
+
+((Y (fn [rec]
+     (fn [l]
+       (if (empty? l)
+         0
+         (inc (rec (rest l)))) ))) '(a b c d e))
+=> 5
+
+How about reversing a list? This one's really recursive (quadruply)!
+
+((Y (fn [rec]
+     (fn [l]
+       (cond (empty? l) '()
+             (empty? (rest l)) (list (first l))
+             :else (cons (first (rec (rest l)))
+                         (rec (cons (first l)
+                                    (rec (rest (rec (rest l)))) )))) )))
+'(a b c d e))
+=> (e d c b a)
+
+We can define a variant of Y that can handle anonymous functions with
+multiple parameters:
+
+(defn Y2 [m]
+ ((fn [future]
+    (m (fn [& args]
+         (apply (future future) args))))
+  (fn [future]
+    (m (fn [& args]
+         (apply (future future) args)))) ))
+
+Using this we can remove elements that we don't want from a list:
+
+((Y2 (fn [rec]
+      (fn [obj l]
+        (cond (empty? l) '()
+              (= (first l) obj) (rec obj (rest l))
+              :else (cons (first l) (rec obj (rest l)))) )))
+'pung
+'(pung foo bar baz pung baz bar pung foo))
+=> (foo bar baz baz bar foo)
+
+Replace certain elements in a list:
+
+((Y2 (fn [rec]
+      (fn [new old l]
+        (cond (empty? l) '()
+              (= (first l) old) (cons new (rec new old (rest l)))
+              :else (cons (first l) (rec new old (rest l)))) )))
+'pung
+'foo
+'(pung foo bar baz pung bar foo))
+=> (pung pung bar baz pung bar pung)
+
+Or in an arbitrary tree:
+
+((Y2 (fn [rec]
+      (fn [new old obj]
+        (cond (= obj old) new
+              (and (coll? obj) (seq obj)) (cons (rec new old (first obj))
+                                                (rec new old (rest obj)))
+              :else obj))))
+'a
+'b
+'(a ((b) c (a b c)) d (a b)))
+=> (a ((a) c (a a c)) d (a a))
+
+You'll be glad to know that should Rich ever decide to deprecate the
+map function we will still be able to get on without it:
+
+((Y2 (fn [rec]
+      (fn [f l]
+        (if (empty? l)
+          '()
+          (cons (f (first l)) (rec f (rest l)))) )))
+inc
+(range 10))
+=> (1 2 3 4 5 6 7 8 9 10)
+
+((Y2 (fn [rec]
+      (fn [f l]
+        (if (empty? l)
+          '()
+          (cons (f (first l)) (rec f (rest l)))) )))
+#(.toUpperCase %)
+'("Is" "this" "not" "pung?"))
+=> ("IS" "THIS" "NOT" "PUNG?")
+
+We're still OK if he decides to yank reduce too:
+
+((Y2 (fn [rec]
+      (fn [f start l]
+        (if (empty? l)
+          start
+          (f (first l) (rec f start (rest l)))) )))
++
+0
+[1 2 3 4 5])
+=> 15
+
+((Y2 (fn [rec]
+      (fn [f start l]
+        (if (empty? l)
+          start
+          (f (first l) (rec f start (rest l)))) )))
+*
+1
+[1 2 3 4 5 6])
+=> 720
+
+If you've followed along this far perhaps you won't be surprised to
+discover that there is an anonymous version of Y itself. Even Y
+doesn't need a name—we just use it directly.
+
+Here's 'length' again:
+
+(((fn [m]
+   ((fn [future]
+      (m (fn [arg]
+           ((future future) arg))))
+    (fn [future]
+      (m (fn [arg]
+           ((future future) arg)))) ))
+ (fn [rec]
+   (fn [l]
+     (if (empty? l)
+       0
+       (inc (rec (rest l)))) )))
+'(a b c d e))
+=> 5
+
+And 'reverse':
+
+(((fn [m]
+   ((fn [future]
+      (m (fn [arg]
+           ((future future) arg))))
+    (fn [future]
+      (m (fn [arg]
+           ((future future) arg)))) ))
+ (fn [rec]
+   (fn [l]
+     (cond (empty? l) '()
+           (empty? (rest l)) (list (first l))
+           :else (cons (first (rec (rest l)))
+                       (rec (cons (first l)
+                                  (rec (rest (rec (rest l)))) )))) )))
+'(a b c d e))
+=> (e d c b a)
+
+Breathtaking in its elegance!
+
+You of course will be excused if you return to conventional
+programming and pretend that you've never heard of the Y combinator,
+but deep down inside you realize that your mind isn't shaped quite the
+same way as before.
+
+Back to Clojure Cookbook: Table of Contents
+
+http://www.gettingclojure.com/cookbook:functional-programming
+http://www.gettingclojure.com/cookbook:clojure-cookbook
+

@@ -28,6 +28,13 @@
 ; (= (__ [7 6 5 4]) [])
 ; 
 
+(defn is-consecutive? [coll]
+  (cond
+    ; (<=   (count coll) 1) :nil11
+    ;(nil? (first (rest coll))) :nil0
+    ; (>=   (first coll) (first (rest coll))) :nil1
+    ; (<    (first coll) (first (rest coll))) (is-consecutive? (drop 2 coll))
+     ))
 
 #_(
 ; user=> (doc partition)
