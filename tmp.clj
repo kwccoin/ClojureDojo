@@ -30,11 +30,69 @@
 
 (defn is-consecutive? [coll]
   (cond
-    ; (<=   (count coll) 1) :nil11
-    ;(nil? (first (rest coll))) :nil0
-    ; (>=   (first coll) (first (rest coll))) :nil1
-    ; (<    (first coll) (first (rest coll))) (is-consecutive? (drop 2 coll))
+    (and 
+      (> (count coll) 1)
+      (=  (first coll) (dec (second coll)))) 
+        (is-consecutive? (drop 2 coll))
+    (<= (count coll) 1) :yup
      ))
+
+; Fast:
+(defn iseq? [numbers]
+  (loop [i 1 s (seq numbers)]
+    (if s
+      (if (== (first s) i)
+        (recur 
+          (inc i) 
+          (next s)))
+       true)))
+
+; Possibly-unreadably clever:
+  (defn iseq?2 [numbers]
+    (and
+      (= (count numbers) (count distinct numbers))
+      (every? identity (map #(get (into [] numbers) (dec %) nil) numbers))))
+
+; Simple:
+(defn iseq?3 [numbers]
+  (= numbers (range 1 (inc (count numbers)))))
+
+(defn f [xs] 
+  (every? 
+    #(apply = %) 
+    (map vector xs (iterate inc 1))))
+
+(defn f [xs] 
+  (every? 
+    true? 
+    (map = xs (iterate inc 1))))
+
+; from dnolen
+(defn conj-if-sequential
+  ([] [])
+  ([a] a)
+  ([a b] (let [a (if (vector? a) a [a])]
+           (if (= (inc (last a)) b)
+             (conj a b)
+             a))))
+
+(reduce conj-if-sequential [2 3 4 6 8 1])
+
+(defn sequential-seqs
+  ([] [])
+  ([a] a)
+  ([a b] (let [n (last (last a))]
+           (if (and n (= (inc n) b))
+             (update-in a [(dec (count a))] conj b)
+             (conj a [b])))))
+
+(defn largest
+  ([] nil)
+  ([a] a)
+  ([a b] (if (> (count b) (count a)) b a)))
+
+(reduce largest (reduce sequential-seqs [] [2 3 4 6 8 1 4 5 6 7 8 9 13]))
+
 
 #_(
 ; user=> (doc partition)
