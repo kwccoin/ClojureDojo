@@ -598,3 +598,18 @@ http://pragprog.com/titles/shcloj/programming-clojure' Programming Clojure
 http://www.amazon.com/dp/1935182641' The Joy of Clojure
 http://www.amazon.com/dp/1935182595' Clojure in Action
 http://www.amazon.com/dp/1430272317' Practical Clojure
+
+-------
+
+Resource
+Strange Loop 2012 - conference
+https://thestrangeloop.com
+https://thestrangeloop.com/news/strange-loop-2012-video-schedule
+ - slides
+    https://github.com/strangeloop/strangeloop2012/tree/master/slides
+ - coverage
+    https://github.com/strangeloop/strangeloop2012/wiki/Coverage
+
+------
+
+
