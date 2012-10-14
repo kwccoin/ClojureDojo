@@ -22,30 +22,64 @@
   (partition-by (fn [x] (= 1 (- (second x) (first x))))
                 (filter #(< (first %) (second %))
                         (partition 2 1 coll))))
-
 ;; Example
 (def test-vecs [[1 0 1 2 3 0 4 5] [5 6 1 3 2 7] [2 3 3 4 5] [7 6 5 4]])
-
 (vector
  (for [i test-vecs]
    (vec (set (flatten (first (subseq- i)))))))
-
 ;; Result: [([0 1 2 3] [5 6] [2 3 4 5] [])]
 
 ;; hyone's solution to Longest Increasing Sub-Seq
-;; https://4clojure.com/problem/53
-
-(fn longest-inc-seq [coll]
+; This function takes a collection and return the longest
+; increasing sequence contained in it.
+; Repetitions are not allowed but 'holes' yes.
+(defn longest-inc-seq [coll]
+  ; The core is reduce with this signature:
+  ; (reduce [f val coll])
+  ; The function f given to reduce is a two parameters function
+  ; that simply return the longest (> 1) sequence of two.
   (reduce #(let [len-a (count %1)
                  len-b (count %2)]
              (if (and (> len-b 1) (> len-b len-a)) %2 %1))
+    ; the initial value for reduce, and the %1 for f,
+    ; the %2 will the the first item in coll.
+    ; Then f will be applied to that result and the
+    ; second item in coll, etc.
     []
+    ; The reduction will provide the coll (a lazy seq) for
+    ; the reduce function above.
+    ; We consider reductions with this signature:
+    ; (reductions [f init coll])
+    (reductions
+      ; Reductions return a lazy seq of the intermediate values
+      ; of the reduction of coll (the initial argument of
+      ; our function longest-inc-seq) by a function f, and
+      ; starting with init.
+      ; The function f takes two arguments and check
+      ; if second argument is greater than the last element of
+      ; the first argument (thath is a collection).
+      ; If it is so, conjoin this element in the first, else
+      ; return a new collection with just this element.
+      ; The function of the reduce above will check if this
+      ; new collection have the best count to be the candidate
+      ; for the longest sequence.
+      (fn [xs y]
+        (if (> y (last xs)) (conj xs y) [y]))
+      ; This is the initial parameter for reductions
+      [(first coll)]
+      ; This is the collection to check for the longest sequence.
+      (rest coll))))
+;
+(defn longest-inc-seq [coll]
+  (reduce #(let [len-a (count %1) 
+                 len-b (count %2)]
+             (if (and (> len-b 1) (> len-b len-a)) %2 %1))
+    []  
     (reductions
       (fn [xs y]
         (if (> y (last xs)) (conj xs y) [y]))
       [(first coll)]
       (rest coll))))
-;
 
 ; #53 - Appendix
 ; is-sequential? predicate function
