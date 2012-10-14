@@ -119,19 +119,30 @@
 ; [6]
 ; user=> (reduce conj-if-sequential [5 0 2 3 4 6 8 1])
 ; [5 6]
-; user=> (reduce conj-if-sequential [8 0 2 3 4 6 8 1])
-; [8]
 ; user=> (reduce conj-if-sequential [9 0 2 3 4 6 8 1])
 ; [9]
 
 ; More general version
-
+; This function works with nested associative structures
+; and return a vector.
 (defn sequential-seqs
   ([] [])
   ([a] a)
+  ; When works with two arguments, create a variable n.
+  ; n contains the last element of the last nested vector
+  ; contained in a.
   ([a b] (let [n (last (last a))]
+           ; If the second parameter (b) is the successive 
+           ; of the new n...
            (if (and n (= (inc n) b))
+             ; then update-in the nested structure a 
+             ; the last element, conjoining the element b.
+             ; The key for the last element in the nested a
+             ; is simply the size of the structure a, minus one.
              (update-in a [(dec (count a))] conj b)
+             ; Else return the nested structure a with a 
+             ; new element conjoined, the vector with the
+             ; element b (that is not the consecutive of n.
              (conj a [b])))))
 
 (defn largest
@@ -140,7 +151,6 @@
   ([a b] (if (> (count b) (count a)) b a)))
 
 (reduce largest (reduce sequential-seqs [] [2 3 4 6 8 1 4 5 6 7 8 9 13]))
-
 
 #_(
 ; user=> (doc partition)
@@ -229,4 +239,28 @@
 ;     happen at different 'places' depending on the concrete type.
 ; nil
 ; user=> 
+; user=> (doc update-in)
+; -------------------------
+; clojure.core/update-in
+; ([m [k & ks] f & args])
+;   'Updates' a value in a nested associative structure, where ks is a
+;   sequence of keys and f is a function that will take the old value
+;   and any supplied args and return the new value, and returns a new
+;   nested structure.  If any levels do not exist, hash-maps will be
+;   created.
+; nil
+; user=> 
+; user=> (def users [{:name "James" :age 26}  {:name "John" :age 43}])
+; #'user/users
+; user=> (update-in users [1 :age] inc)
+; [{:name "James", :age 26} {:name "John", :age 44}]
+; (defn char-cnt [s]
+;   "Counts occurence of each character in s"
+;   (reduce
+;     (fn [m k]
+;       (update-in m [k] (fnil inc 0)))
+;   {}
+;   (seq s)))
+; ; Note use of fnil above - returns 0 if nil is passed to inc
+; ; (avoids null pointer exception)
 )
