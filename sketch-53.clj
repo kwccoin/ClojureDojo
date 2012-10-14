@@ -16,19 +16,6 @@
 ; (= (__ [7 6 5 4]) [])
 ; 
 
-;; Breaks on [2 3 3 4 5]
-;; http://www.4clojure.com/problem/53#prob-title
-(defn subseq- [coll]
-  (partition-by (fn [x] (= 1 (- (second x) (first x))))
-                (filter #(< (first %) (second %))
-                        (partition 2 1 coll))))
-;; Example
-(def test-vecs [[1 0 1 2 3 0 4 5] [5 6 1 3 2 7] [2 3 3 4 5] [7 6 5 4]])
-(vector
- (for [i test-vecs]
-   (vec (set (flatten (first (subseq- i)))))))
-;; Result: [([0 1 2 3] [5 6] [2 3 4 5] [])]
-
 ;; hyone's solution to Longest Increasing Sub-Seq
 ; This function takes a collection and return the longest
 ; increasing sequence contained in it.
@@ -80,6 +67,73 @@
         (if (> y (last xs)) (conj xs y) [y]))
       [(first coll)]
       (rest coll))))
+
+; Solutions:
+(fn longest-inc-seq [coll]
+  (reduce #(let [len-a (count %1)
+                 len-b (count %2)]
+             (if (and (> len-b 1) (> len-b len-a)) %2 %1))
+    [] 
+    (reductions
+      (fn [xs y]
+        (if (> y (last xs)) (conj xs y) [y]))
+      [(first coll)]
+      (rest coll))))
+
+; austintaylor's solution:
+(fn [s]
+  (let [
+    subseqs (filter
+      #(not= 1 (count %))
+      (mapcat
+        (partial reductions conj [])
+        (tree-seq
+          (complement empty?)
+          (comp list rest) s)))
+      inc? (fn [s] (or (empty? s) (= s (range (first s) (inc (last s))))))]
+  (last (sort-by count (filter inc? subseqs)))))
+
+; maximental's solution:
+(fn [C [s & z]]
+  ((fn g [a [h & t]]
+    (if h
+      (if (< (last a) h)
+        (g (conj a h) t)
+        (let [q (g [h] t)]
+          (if (next a)
+            (if (< (C a) (C q)) q a)         
+            q)))
+      []))
+   [s] `(~@z 0)))
+count
+
+; nikelandjelo's solution:
+(fn [s]
+        (->> (for [st (range (count s)) e (range st (inc (count s)))] (drop st (take e s)))
+             (remove #(< (count %) 2))
+             (filter #(apply < %))
+             (reverse)
+             (cons [])
+             (apply max-key count)))
+
+; norman's solution:
+(fn lseq [in-vals]
+  (letfn
+      [(better-seq [seq1 seq2]
+         (if (> (count seq2) (count seq1)) seq2 seq1))
+       (lseq2 [vals]
+         (loop [current-max []
+                current-seq []
+                items vals]
+           (if-not (seq items)
+             (better-seq current-max current-seq)
+             (if (every? #(> (first items) %) current-seq)
+               (recur current-max (conj current-seq (first items)) (rest items))
+               (recur (better-seq current-max current-seq) [(first items)] (rest items))))))]
+    (let [result (lseq2 in-vals)]
+      (if (> (count result) 1)
+        result
+        []))))
 
 ; #53 - Appendix
 ; is-sequential? predicate function
