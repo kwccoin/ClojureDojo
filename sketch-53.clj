@@ -50,9 +50,11 @@
 ; #53 - Appendix
 ; is-sequential? predicate function
 
+; is-seq from 1
 ; Fast:
 (defn iseq? [numbers]
-  (loop [i 1 s (seq numbers)]
+  (loop [i 1
+         s (seq numbers)]
     (if s
       (if (== (first s) i)
         (recur 
@@ -64,32 +66,65 @@
   (defn iseq?2 [numbers]
     (and
       (= (count numbers) (count distinct numbers))
+      ; makes a new coll from numbers
+      ; check if in this coll there is the preceding value
       (every? identity (map #(get (into [] numbers) (dec %) nil) numbers))))
 
+; is-seq from 1
 ; Simple:
 (defn iseq?3 [numbers]
   (= numbers (range 1 (inc (count numbers)))))
 
+; is-seq from 1
 (defn f [xs] 
   (every? 
     #(apply = %) 
     (map vector xs (iterate inc 1))))
 
+; is-seq from 1
 (defn f [xs] 
   (every? 
     true? 
     (map = xs (iterate inc 1))))
 
 ; from dnolen
+; This function conj-if-sequential return a
+; vector. This vector contains the fist element
+; of the vector passed as argument and the
+; others elements of the argument that are
+; sequential to this first.
 (defn conj-if-sequential
   ([] [])
   ([a] a)
+  ; When this function receive 2 arguments
+  ; a and b, makes a ckeck.
+  ; This check need that the first argument (a)
+  ; is a vector, if not it makes one.
+  ; Then check if the last element of this vector
+  ; is the preceding of the second argument
+  ; of the function (b).
+  ; If it so, it conj the second argument (b)
+  ; in the vector made from the first argument (a)
   ([a b] (let [a (if (vector? a) a [a])]
            (if (= (inc (last a)) b)
              (conj a b)
              a))))
 
-(reduce conj-if-sequential [2 3 4 6 8 1])
+; Examples:
+; user=> (reduce conj-if-sequential [2 3 4 6 8 1])
+; [2 3 4]
+; user=> (reduce conj-if-sequential [0 2 3 4 6 8 1])
+; [0 1]
+; user=> (reduce conj-if-sequential [6 0 2 3 4 6 8 1])
+; [6]
+; user=> (reduce conj-if-sequential [5 0 2 3 4 6 8 1])
+; [5 6]
+; user=> (reduce conj-if-sequential [8 0 2 3 4 6 8 1])
+; [8]
+; user=> (reduce conj-if-sequential [9 0 2 3 4 6 8 1])
+; [9]
+
+; More general version
 
 (defn sequential-seqs
   ([] [])
@@ -165,6 +200,33 @@
 ; clojure.core/ffirst
 ; ([x])
 ;   Same as (first (first x))
+; nil
+; user=> 
+; user=> (doc =)
+; -------------------------
+; clojure.core/=
+; ([x] [x y] [x y & more])
+;   Equality. Returns true if x equals y, false if not. Same as
+;   Java x.equals(y) except it also works for nil, and compares
+;   numbers and collections in a type-independent manner.  Clojure's immutable data
+;   structures define equals() (and thus =) as a value, not an identity,
+;   comparison.
+; nil
+; user=> (doc every?)
+; -------------------------
+; clojure.core/every?
+; ([pred coll])
+;   Returns true if (pred x) is logical true for every x in coll, else
+;   false.
+; nil
+; user=> 
+; user=> (doc conj)
+; -------------------------
+; clojure.core/conj
+; ([coll x] [coll x & xs])
+;   conj[oin]. Returns a new collection with the xs
+;     'added'. (conj nil item) returns (item).  The 'addition' may
+;     happen at different 'places' depending on the concrete type.
 ; nil
 ; user=> 
 )
